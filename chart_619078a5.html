@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>测试图表</title>
+</head>
+<body>
+    <h1>这是一个测试图表</h1>
+    <p>用于测试临时文件分享服务</p>
+
+    <!-- 增强功能按钮 -->
+    <div id="chart-controls" style="position: fixed; top: 10px; right: 10px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+        <button id="download-btn" onclick="downloadChart()" style="margin: 2px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">💾 下载</button>
+        <button id="print-btn" onclick="window.print()" style="margin: 2px; padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">🖨️ 打印</button>
+        <button id="fullscreen-btn" onclick="toggleFullscreen()" style="margin: 2px; padding: 5px 10px; background: #ffc107; color: black; border: none; border-radius: 3px; cursor: pointer;">🔍 全屏</button>
+    </div>
+    
+    <script>
+    // 下载功能
+    function downloadChart() {
+        const htmlContent = document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '测试图表.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // 全屏功能
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+    
+    // 键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            downloadChart();
+        }
+        if (e.key === 'F11') {
+            e.preventDefault();
+            toggleFullscreen();
+        }
+    });
+    
+    // 响应式控制面板
+    window.addEventListener('resize', function() {
+        const controls = document.getElementById('chart-controls');
+        if (window.innerWidth < 768) {
+            controls.style.position = 'relative';
+            controls.style.top = 'auto';
+            controls.style.right = 'auto';
+            controls.style.margin = '10px auto';
+            controls.style.textAlign = 'center';
+        } else {
+            controls.style.position = 'fixed';
+            controls.style.top = '10px';
+            controls.style.right = '10px';
+        }
+    });
+    </script>
+
+</body>
+</html>
