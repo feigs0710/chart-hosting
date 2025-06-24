@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的第一个ECharts图表</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333333;
+            overflow-x: hidden;
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin: 0 auto;
+            max-width: 1400px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #chart {
+            width: 800px;
+            height: 600px;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.5px;
+        }
+        .loading {
+            text-align: center;
+            color: #333333;
+            font-size: 16px;
+            opacity: 0.7;
+        }
+        .chart-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .control-btn {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .control-btn:hover {
+            background: rgba(255,255,255,1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .download-group {
+            display: flex;
+            gap: 5px;
+        }
+        .download-group .control-btn {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+        .edit-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .edit-panel.open {
+            right: 0;
+        }
+        .edit-panel h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .edit-group {
+            margin-bottom: 20px;
+        }
+        .edit-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        .edit-group input, .edit-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .edit-group button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .edit-group button:hover {
+            background: #0056b3;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .chart-container {
+                padding: 15px;
+            }
+            #chart {
+                width: 100% !important;
+                height: 400px !important;
+            }
+            .chart-title {
+                font-size: 20px;
+            }
+            .chart-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+            .edit-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+        
+        /* 背景主题样式 */
+        .bg-light {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .bg-dark {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+        }
+        .bg-dark .chart-title {
+            color: #ecf0f1;
+        }
+        .bg-dark .edit-panel {
+            background: rgba(44, 62, 80, 0.95);
+            color: #ecf0f1;
+        }
+        .bg-dark .edit-panel h3 {
+            color: #ecf0f1;
+        }
+        .bg-dark .edit-group label {
+            color: #bdc3c7;
+        }
+        .bg-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .bg-gradient .chart-title {
+            color: white;
+        }
+        .bg-gradient .edit-panel {
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+        }
+        .bg-gradient .edit-panel h3 {
+            color: white;
+        }
+        .bg-gradient .edit-group label {
+            color: #e8eaf6;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div class="chart-controls">
+            <div class="download-group">
+                <button class="control-btn" onclick="downloadAsImage()" title="下载为图片">🖼️ 图片</button>
+                <button class="control-btn" onclick="downloadAsHTML()" title="下载为HTML文件">📄 HTML</button>
+            </div>
+            <button class="control-btn" onclick="toggleFullscreen()" title="全屏显示">🔍 全屏</button>
+            <button class="control-btn" onclick="openEditPanel()" title="编辑图表">✏️ 编辑</button>
+            <button class="control-btn" onclick="refreshChart()" title="刷新图表">🔄 刷新</button>
+        </div>
+        
+        <h1 class="chart-title" id="chartTitle">我的第一个ECharts图表</h1>
+        <div class="loading" id="loading">图表加载中...</div>
+        <div id="chart"></div>
+    </div>
+    
+    <!-- 编辑面板 -->
+    <div class="edit-panel" id="editPanel">
+        <button class="close-btn" onclick="closeEditPanel()">×</button>
+        <h3>图表编辑</h3>
+        
+        <div class="edit-group">
+            <label for="titleInput">图表标题:</label>
+            <input type="text" id="titleInput" value="我的第一个ECharts图表">
+            <button onclick="updateTitle()">更新标题</button>
+        </div>
+        
+        <div class="edit-group">
+            <label for="colorThemeSelect">主题颜色:</label>
+            <select id="colorThemeSelect" onchange="updateColorTheme()">
+                <option value="blue">蓝色系</option>
+                <option value="green">绿色系</option>
+                <option value="red">红色系</option>
+                <option value="purple">紫色系</option>
+                <option value="orange">橙色系</option>
+                <option value="pink">粉色系</option>
+                <option value="cyan">青色系</option>
+                <option value="custom">自定义</option>
+            </select>
+        </div>
+        
+        <div class="edit-group" id="customColorGroup" style="display: none;">
+            <label for="customColor">自定义颜色:</label>
+            <input type="color" id="customColor" value="#5470c6" onchange="applyCustomColor()">
+            <button onclick="applyCustomColor()">应用颜色</button>
+        </div>
+        
+        <div class="edit-group">
+            <label for="backgroundSelect">背景主题:</label>
+            <select id="backgroundSelect" onchange="updateBackground()">
+                <option value="light">浅色背景</option>
+                <option value="dark">深色背景</option>
+                <option value="gradient">渐变背景</option>
+            </select>
+        </div>
+        
+        <div class="edit-group">
+            <label for="chartTypeSelect">图表类型:</label>
+            <select id="chartTypeSelect">
+                <option value="bar">柱状图</option>
+                <option value="line">折线图</option>
+                <option value="pie">饼图</option>
+                <option value="scatter">散点图</option>
+                <option value="radar">雷达图</option>
+            </select>
+            <button onclick="updateChartType()">更新类型</button>
+        </div>
+        
+        <div class="edit-group">
+            <label>动画效果:</label>
+            <button onclick="toggleAnimation()">关闭动画</button>
+        </div>
+        
+        <div class="edit-group">
+            <label>数据缩放:</label>
+            <button onclick="toggleDataZoom()">开启缩放</button>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let myChart;
+        let currentOption = {"title": {"text": "示例柱状图", "textStyle": {"color": "#333", "fontSize": 18, "fontWeight": "normal", "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"}, "left": "left"}, "tooltip": {"trigger": "axis", "backgroundColor": "rgba(255, 255, 255, 0.95)", "borderColor": "rgba(0, 0, 0, 0.1)", "borderWidth": 1, "textStyle": {"color": "#333", "fontSize": 12, "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"}, "extraCssText": "border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"}, "xAxis": {"data": ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"], "axisLabel": {"color": "#333333", "fontSize": 12, "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"}, "axisLine": {"lineStyle": {"color": "rgba(0, 0, 0, 0.2)"}}, "splitLine": {"lineStyle": {"color": ["rgba(0, 0, 0, 0.02)", "rgba(0, 0, 0, 0.05)"]}}}, "yAxis": {"axisLabel": {"color": "#333333", "fontSize": 12, "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"}, "axisLine": {"lineStyle": {"color": "rgba(0, 0, 0, 0.2)"}}, "splitLine": {"lineStyle": {"color": ["rgba(0, 0, 0, 0.02)", "rgba(0, 0, 0, 0.05)"]}}}, "series": [{"name": "销量", "type": "bar", "data": [5, 20, 36, 10, 10, 20], "itemStyle": {"borderRadius": [4, 4, 0, 0], "shadowBlur": 10, "shadowColor": "rgba(0, 0, 0, 0.1)", "shadowOffsetY": 4}}], "color": ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4", "#ea7ccc"], "grid": {"left": "3%", "right": "4%", "bottom": "3%", "containLabel": true}, "animation": true, "animationDuration": 1000, "animationEasing": "cubicOut"};
+        let currentTheme = 'light';
+        let animationEnabled = true;
+        let dataZoomEnabled = false;
+        
+        // 主题配置
+        const themeConfigs = {
+            'light': {
+                backgroundColor: 'transparent',
+                textColor: '#333333',
+                colors: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc']
+            },
+            'dark': {
+                backgroundColor: 'transparent',
+                textColor: '#ffffff',
+                colors: ['#dd6b66', '#759aa0', '#e69d87', '#8dc1a9', '#ea7e53', '#eedd78', '#73a373', '#73b9bc', '#7289ab']
+            },
+            'vintage': {
+                backgroundColor: 'transparent',
+                textColor: '#333333',
+                colors: ['#d87c7c', '#919e8b', '#d7ab82', '#6e7074', '#61a0a8', '#efa18d', '#787464', '#cc7e63', '#724e58']
+            }
+        };
+        
+        // 初始化图表
+        function initChart() {
+            const dom = document.getElementById('chart');
+            myChart = echarts.init(dom, null, {
+                renderer: 'canvas',
+                useDirtyRect: false
+            });
+            
+            // 隐藏加载提示
+            document.getElementById('loading').style.display = 'none';
+            
+            // 设置图表选项
+            myChart.setOption(currentOption);
+            
+            // 响应式处理
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+        
+        // 下载为图片
+        function downloadAsImage() {
+            const url = myChart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff'
+            });
+            
+            const link = document.createElement('a');
+            link.download = document.getElementById('chartTitle').textContent + '.png';
+            link.href = url;
+            link.click();
+        }
+        
+        // 下载为HTML文件
+        function downloadAsHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = document.getElementById('chartTitle').textContent + '.html';
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 全屏切换
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 打开编辑面板
+        function openEditPanel() {
+            document.getElementById('editPanel').classList.add('open');
+        }
+        
+        // 关闭编辑面板
+        function closeEditPanel() {
+            document.getElementById('editPanel').classList.remove('open');
+        }
+        
+        // 刷新图表
+        function refreshChart() {
+            myChart.clear();
+            myChart.setOption(currentOption, true);
+        }
+        
+        // 更新标题
+        function updateTitle() {
+            const newTitle = document.getElementById('titleInput').value;
+            document.getElementById('chartTitle').textContent = newTitle;
+            
+            if (currentOption.title) {
+                currentOption.title.text = newTitle;
+                myChart.setOption(currentOption);
+            }
+        }
+        
+        // 颜色主题配置
+        const colorThemes = {
+            blue: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'],
+            green: ['#91cc75', '#5470c6', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'],
+            red: ['#ee6666', '#5470c6', '#91cc75', '#fac858', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'],
+            purple: ['#9a60b4', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452'],
+            orange: ['#fc8452', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#9a60b4'],
+            pink: ['#ea7ccc', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452'],
+            cyan: ['#73c0de', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#3ba272', '#fc8452', '#9a60b4']
+        };
+        
+        // 更新颜色主题
+        function updateColorTheme() {
+            const colorTheme = document.getElementById('colorThemeSelect').value;
+            const customColorGroup = document.getElementById('customColorGroup');
+            
+            if (colorTheme === 'custom') {
+                customColorGroup.style.display = 'block';
+            } else {
+                customColorGroup.style.display = 'none';
+                if (colorThemes[colorTheme]) {
+                    currentOption.color = colorThemes[colorTheme];
+                    myChart.setOption(currentOption);
+                }
+            }
+        }
+        
+        // 应用自定义颜色
+        function applyCustomColor() {
+            const customColor = document.getElementById('customColor').value;
+            const baseColors = [customColor];
+            
+            // 生成基于自定义颜色的色彩系列
+            for (let i = 1; i < 8; i++) {
+                const hue = (parseInt(customColor.slice(1), 16) + i * 45) % 360;
+                baseColors.push(`hsl(${hue}, 70%, 60%)`);
+            }
+            
+            currentOption.color = baseColors;
+            myChart.setOption(currentOption);
+        }
+        
+        // 更新背景主题
+        function updateBackground() {
+            const bgTheme = document.getElementById('backgroundSelect').value;
+            const body = document.body;
+            
+            body.className = body.className.replace(/bg-\w+/g, '');
+            body.classList.add(`bg-${bgTheme}`);
+            
+            // 更新图表背景
+            if (bgTheme === 'dark') {
+                myChart.dispose();
+                myChart = echarts.init(document.getElementById('chart'), 'dark');
+                myChart.setOption(currentOption);
+            } else if (bgTheme === 'light') {
+                myChart.dispose();
+                myChart = echarts.init(document.getElementById('chart'), null);
+                myChart.setOption(currentOption);
+            } else if (bgTheme === 'gradient') {
+                document.getElementById('chart').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
+        }
+        
+        // 更新图表类型
+        function updateChartType() {
+            const newType = document.getElementById('chartTypeSelect').value;
+            
+            if (currentOption.series && currentOption.series.length > 0) {
+                currentOption.series.forEach(series => {
+                    series.type = newType;
+                    
+                    // 根据图表类型调整配置
+                    if (newType === 'pie') {
+                        series.radius = ['40%', '70%'];
+                        series.center = ['50%', '50%'];
+                    } else if (newType === 'line') {
+                        series.smooth = true;
+                    }
+                });
+                
+                myChart.setOption(currentOption, true);
+            }
+        }
+        
+        // 切换动画
+        function toggleAnimation() {
+            animationEnabled = !animationEnabled;
+            currentOption.animation = animationEnabled;
+            myChart.setOption(currentOption);
+            
+            // 更新按钮文本
+            event.target.textContent = animationEnabled ? '关闭动画' : '开启动画';
+        }
+        
+        // 切换数据缩放
+        function toggleDataZoom() {
+            dataZoomEnabled = !dataZoomEnabled;
+            
+            if (dataZoomEnabled) {
+                currentOption.dataZoom = [
+                    {
+                        type: 'slider',
+                        show: true,
+                        xAxisIndex: [0],
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        type: 'inside',
+                        xAxisIndex: [0],
+                        start: 0,
+                        end: 100
+                    }
+                ];
+            } else {
+                delete currentOption.dataZoom;
+            }
+            
+            myChart.setOption(currentOption, true);
+            
+            // 更新按钮文本
+            event.target.textContent = dataZoomEnabled ? '关闭缩放' : '开启缩放';
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            initChart();
+        });
+        
+        // 点击空白区域关闭编辑面板
+        document.addEventListener('click', function(e) {
+            const editPanel = document.getElementById('editPanel');
+            const editBtn = e.target.closest('.control-btn');
+            
+            if (!editPanel.contains(e.target) && !editBtn) {
+                editPanel.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
