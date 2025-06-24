@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一周温度变化趋势</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333333;
+            overflow-x: hidden;
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin: 0 auto;
+            max-width: 1400px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #chart {
+            width: 100%;
+            height: 400px;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.5px;
+        }
+        .loading {
+            text-align: center;
+            color: #333333;
+            font-size: 16px;
+            opacity: 0.7;
+        }
+        .chart-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .control-btn {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .control-btn:hover {
+            background: rgba(255,255,255,1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div class="chart-controls">
+            <button class="control-btn" onclick="downloadChart()">📥 下载</button>
+            <button class="control-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+            <button class="control-btn" onclick="refreshChart()">🔄 刷新</button>
+        </div>
+        <div class="chart-title">一周温度变化趋势</div>
+        <div id="chart">
+            <div class="loading">图表加载中...</div>
+        </div>
+    </div>
+    
+    <script>
+        // 初始化图表
+        var chartDom = document.getElementById('chart');
+        var myChart = echarts.init(chartDom, 'light');
+        window.myChart = myChart;
+        
+        // 图表配置
+        var option = {
+  "title": {
+    "text": "温度变化",
+    "textStyle": {
+      "color": "#333",
+      "fontSize": 20,
+      "fontWeight": "bold",
+      "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"
+    }
+  },
+  "tooltip": {
+    "trigger": "axis",
+    "backgroundColor": "rgba(255, 255, 255, 0.95)",
+    "borderColor": "rgba(0, 0, 0, 0.1)",
+    "borderWidth": 1,
+    "textStyle": {
+      "color": "#333",
+      "fontSize": 12,
+      "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"
+    },
+    "extraCssText": "border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); backdrop-filter: blur(10px);"
+  },
+  "xAxis": {
+    "type": "category",
+    "data": [
+      "周一",
+      "周二",
+      "周三",
+      "周四",
+      "周五",
+      "周六",
+      "周日"
+    ],
+    "axisLine": {
+      "lineStyle": {
+        "color": "rgba(0, 0, 0, 0.1)",
+        "width": 1
+      }
+    },
+    "axisTick": {
+      "lineStyle": {
+        "color": "rgba(0, 0, 0, 0.1)"
+      }
+    },
+    "axisLabel": {
+      "color": "#333333",
+      "fontSize": 11,
+      "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"
+    },
+    "splitLine": {
+      "lineStyle": {
+        "color": "rgba(0, 0, 0, 0.1)",
+        "type": "dashed",
+        "opacity": 0.5
+      }
+    }
+  },
+  "yAxis": {
+    "type": "value",
+    "axisLine": {
+      "lineStyle": {
+        "color": "rgba(0, 0, 0, 0.1)",
+        "width": 1
+      }
+    },
+    "axisTick": {
+      "lineStyle": {
+        "color": "rgba(0, 0, 0, 0.1)"
+      }
+    },
+    "axisLabel": {
+      "color": "#333333",
+      "fontSize": 11,
+      "fontFamily": "PingFang SC, Microsoft YaHei, sans-serif"
+    },
+    "splitLine": {
+      "lineStyle": {
+        "color": "rgba(0, 0, 0, 0.1)",
+        "type": "dashed",
+        "opacity": 0.5
+      }
+    }
+  },
+  "series": [
+    {
+      "name": "温度",
+      "type": "line",
+      "data": [
+        11,
+        11,
+        15,
+        13,
+        12,
+        13,
+        10
+      ],
+      "lineStyle": {
+        "width": 3,
+        "cap": "round",
+        "join": "round"
+      },
+      "itemStyle": {
+        "borderWidth": 2,
+        "borderColor": "#fff"
+      },
+      "smooth": true
+    }
+  ],
+  "color": [
+    "#5470c6",
+    "#91cc75",
+    "#fac858",
+    "#ee6666",
+    "#73c0de",
+    "#3ba272",
+    "#fc8452",
+    "#9a60b4",
+    "#ea7ccc"
+  ],
+  "dataZoom": [
+    {
+      "type": "slider",
+      "show": true,
+      "xAxisIndex": [
+        0
+      ],
+      "start": 0,
+      "end": 100,
+      "backgroundColor": "rgba(47,69,84,0.1)",
+      "dataBackground": {
+        "lineStyle": {
+          "color": "#8392A5"
+        },
+        "areaStyle": {
+          "color": "#8392A5"
+        }
+      },
+      "selectedDataBackground": {
+        "lineStyle": {
+          "color": "#8392A5"
+        },
+        "areaStyle": {
+          "color": "#8392A5"
+        }
+      }
+    },
+    {
+      "type": "inside",
+      "xAxisIndex": [
+        0
+      ],
+      "start": 0,
+      "end": 100
+    }
+  ],
+  "animation": true,
+  "animationDuration": 1000,
+  "animationEasing": "cubicOut"
+};
+        
+        // 设置图表选项
+        myChart.setOption(option, true);
+        
+        // 保存原始配置供编辑功能使用
+        window.originalChartOption = JSON.parse(JSON.stringify(option));
+        window.currentChartOption = JSON.parse(JSON.stringify(option));
+        
+        // 响应式调整
+        window.addEventListener("resize", function() { myChart.resize(); });
+        
+        // 图表加载完成后的回调
+        myChart.on('finished', function() {
+            console.log('图表渲染完成');
+            // 添加加载完成的视觉反馈
+            const loadingEl = document.querySelector('.loading');
+            if (loadingEl) {
+                loadingEl.style.opacity = '0';
+                setTimeout(() => loadingEl.remove(), 300);
+            }
+        });
+        
+        // 错误处理
+        myChart.on('error', function(error) {
+            console.error('图表渲染错误:', error);
+            document.getElementById('chart').innerHTML = '<div class="loading" style="color: #ff6b6b;">图表渲染失败，请检查数据格式</div>';
+        });
+        
+        // 图表交互事件
+        myChart.on('click', function(params) {
+            console.log('图表点击事件:', params);
+            // 添加点击反馈
+            if (params.componentType === 'series') {
+                myChart.dispatchAction({
+                    type: 'highlight',
+                    seriesIndex: params.seriesIndex,
+                    dataIndex: params.dataIndex
+                });
+            }
+        });
+        
+        // 鼠标悬停事件
+        myChart.on('mouseover', function(params) {
+            if (params.componentType === 'series') {
+                myChart.dispatchAction({
+                    type: 'highlight',
+                    seriesIndex: params.seriesIndex,
+                    dataIndex: params.dataIndex
+                });
+            }
+        });
+        
+        myChart.on('mouseout', function(params) {
+            myChart.dispatchAction({
+                type: 'downplay',
+                seriesIndex: params.seriesIndex,
+                dataIndex: params.dataIndex
+            });
+        });
+        
+        // 工具函数
+        function downloadChart() {
+            const url = myChart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff'
+            });
+            const link = document.createElement('a');
+            link.download = '一周温度变化趋势.png';
+            link.href = url;
+            link.click();
+        }
+        
+        function toggleFullscreen() {
+            const container = document.querySelector('.chart-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().then(() => {
+                    container.style.maxWidth = '100vw';
+                    container.style.height = '100vh';
+                    document.getElementById('chart').style.height = 'calc(100vh - 120px)';
+                    myChart.resize();
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    container.style.maxWidth = '1400px';
+                    container.style.height = 'auto';
+                    document.getElementById('chart').style.height = '400px';
+                    myChart.resize();
+                });
+            }
+        }
+        
+        function refreshChart() {
+            myChart.clear();
+            myChart.setOption(option, true);
+        }
+    </script>
+
+        <!-- 图表编辑面板 -->
+        <div id="editPanel" style="position: fixed; top: 60px; right: 10px; z-index: 9999; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); min-width: 280px; max-width: 350px; max-height: 80vh; overflow-y: auto; display: none;">
+            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">📊 图表编辑</h4>
+            
+            <!-- 标题编辑 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">图表标题:</label>
+                <input type="text" id="titleInput" value="一周温度变化趋势" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; box-sizing: border-box;">
+                <button onclick="updateTitle()" style="margin-top: 5px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">更新标题</button>
+            </div>
+            
+            <!-- 数据系列控制 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">数据系列:</label>
+                <div id="seriesControls"></div>
+            </div>
+            
+            <!-- 颜色主题 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">颜色主题:</label>
+                <select id="colorTheme" onchange="updateColorTheme()" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                    <option value="default">默认</option>
+                    <option value="blue">蓝色系</option>
+                    <option value="green">绿色系</option>
+                    <option value="red">红色系</option>
+                    <option value="purple">紫色系</option>
+                    <option value="orange">橙色系</option>
+                </select>
+            </div>
+            
+            <!-- 图表类型切换 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">图表类型:</label>
+                <select id="chartType" onchange="updateChartType()" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                    <option value="bar">柱状图</option>
+                    <option value="line">折线图</option>
+                    <option value="pie">饼图</option>
+                    <option value="scatter">散点图</option>
+                </select>
+            </div>
+            
+            <!-- 重置按钮 -->
+            <button onclick="resetChart()" style="width: 100%; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; margin-bottom: 10px;">🔄 重置图表</button>
+        </div>
+        
+        <!-- 功能按钮 -->
+        <div style="position: fixed; top: 10px; right: 10px; z-index: 9998;">
+            <button onclick="toggleEditPanel()" style="margin-right: 5px; padding: 5px 10px; background: #17a2b8; color: white; border: none; border-radius: 3px; cursor: pointer;">✏️ 编辑</button>
+            <button onclick="downloadChart()" style="margin-right: 5px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">📥 下载</button>
+            <button onclick="refreshChart()" style="margin-right: 5px; padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">🔄 刷新</button>
+            <button onclick="toggleFullscreen()" style="padding: 5px 10px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">⛶ 全屏</button>
+        </div>
+        
+        <script>
+        // 全局变量
+        let originalOption = null;
+        let currentOption = null;
+        
+        // 颜色主题配置
+        const colorThemes = {
+            'default': ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
+            'blue': ['#1f77b4', '#aec7e8', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#ff7f0e', '#ffbb78', '#2ca02c'],
+            'green': ['#2ca02c', '#98df8a', '#8c564b', '#c49c94', '#e377c2', '#f7b6d3', '#7f7f7f', '#c7c7c7', '#bcbd22'],
+            'red': ['#d62728', '#ff9896', '#2ca02c', '#98df8a', '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#e377c2'],
+            'purple': ['#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d3', '#7f7f7f', '#c7c7c7', '#bcbd22'],
+            'orange': ['#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#1f77b4', '#aec7e8', '#9467bd']
+        };
+        
+        function toggleEditPanel() {
+            const panel = document.getElementById('editPanel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+                initializeEditPanel();
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        
+        function initializeEditPanel() {
+            if (!originalOption) {
+                originalOption = JSON.parse(JSON.stringify(window.myChart.getOption()));
+                currentOption = JSON.parse(JSON.stringify(originalOption));
+            }
+            
+            // 初始化数据系列控制
+            initSeriesControls();
+            
+            // 设置当前图表类型
+            const chartTypeSelect = document.getElementById('chartType');
+            if (currentOption.series && currentOption.series[0]) {
+                chartTypeSelect.value = currentOption.series[0].type || 'bar';
+            }
+        }
+        
+        function initSeriesControls() {
+            const container = document.getElementById('seriesControls');
+            container.innerHTML = '';
+            
+            if (currentOption.series) {
+                currentOption.series.forEach((series, index) => {
+                    const seriesName = series.name || `系列 ${index + 1}`;
+                    const isVisible = series.data && series.data.length > 0;
+                    
+                    const controlDiv = document.createElement('div');
+                    controlDiv.style.cssText = 'margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = isVisible;
+                    checkbox.onchange = () => toggleSeries(index);
+                    
+                    const label = document.createElement('label');
+                    label.textContent = seriesName;
+                    label.style.cssText = 'margin-left: 5px; flex: 1; font-size: 12px;';
+                    
+                    const colorInput = document.createElement('input');
+                    colorInput.type = 'color';
+                    colorInput.value = getSeriesColor(index);
+                    colorInput.style.cssText = 'width: 30px; height: 20px; border: none; cursor: pointer;';
+                    colorInput.onchange = (e) => updateSeriesColor(index, e.target.value);
+                    
+                    controlDiv.appendChild(checkbox);
+                    controlDiv.appendChild(label);
+                    controlDiv.appendChild(colorInput);
+                    container.appendChild(controlDiv);
+                });
+            }
+        }
+        
+        function getSeriesColor(index) {
+            if (currentOption.color && currentOption.color[index]) {
+                return currentOption.color[index];
+            }
+            return colorThemes.default[index % colorThemes.default.length];
+        }
+        
+        function toggleSeries(index) {
+            if (!currentOption.legend) {
+                currentOption.legend = { selected: {} };
+            }
+            if (!currentOption.legend.selected) {
+                currentOption.legend.selected = {};
+            }
+            
+            const seriesName = currentOption.series[index].name || `系列 ${index + 1}`;
+            const isCurrentlyVisible = currentOption.legend.selected[seriesName] !== false;
+            currentOption.legend.selected[seriesName] = !isCurrentlyVisible;
+            
+            window.myChart.setOption(currentOption);
+        }
+        
+        function updateSeriesColor(index, color) {
+            if (!currentOption.color) {
+                currentOption.color = [...colorThemes.default];
+            }
+            currentOption.color[index] = color;
+            window.myChart.setOption(currentOption);
+        }
+        
+        function updateTitle() {
+            const newTitle = document.getElementById('titleInput').value;
+            if (!currentOption.title) {
+                currentOption.title = {};
+            }
+            currentOption.title.text = newTitle;
+            window.myChart.setOption(currentOption);
+            
+            // 更新页面标题
+            document.querySelector('.chart-title').textContent = newTitle;
+            document.title = newTitle;
+        }
+        
+        function updateColorTheme() {
+            const theme = document.getElementById('colorTheme').value;
+            if (!currentOption) {
+                currentOption = JSON.parse(JSON.stringify(window.myChart.getOption()));
+            }
+            
+            // 更新全局颜色配置
+            currentOption.color = [...colorThemes[theme]];
+            
+            // 如果有系列数据，也更新系列的颜色
+            if (currentOption.series) {
+                currentOption.series.forEach((series, index) => {
+                    if (series.itemStyle) {
+                        series.itemStyle.color = colorThemes[theme][index % colorThemes[theme].length];
+                    } else {
+                        series.itemStyle = { color: colorThemes[theme][index % colorThemes[theme].length] };
+                    }
+                });
+            }
+            
+            // 强制完全重新渲染图表
+            window.myChart.clear();
+            window.myChart.setOption(currentOption, true);
+            
+            // 重新初始化颜色选择器
+            setTimeout(() => {
+                initSeriesControls();
+            }, 100);
+        }
+        
+        function updateChartType() {
+            const newType = document.getElementById('chartType').value;
+            
+            if (currentOption.series) {
+                currentOption.series.forEach(series => {
+                    series.type = newType;
+                    
+                    // 根据图表类型调整特定配置
+                    if (newType === 'pie') {
+                        series.radius = '50%';
+                        series.center = ['50%', '50%'];
+                        delete series.stack;
+                    } else if (newType === 'line') {
+                        series.smooth = true;
+                        delete series.radius;
+                        delete series.center;
+                    } else if (newType === 'bar') {
+                        delete series.radius;
+                        delete series.center;
+                        delete series.smooth;
+                    } else if (newType === 'scatter') {
+                        series.symbolSize = 8;
+                        delete series.radius;
+                        delete series.center;
+                        delete series.smooth;
+                    }
+                });
+            }
+            
+            // 根据图表类型调整坐标轴显示
+            if (newType === 'pie') {
+                currentOption.xAxis = { show: false };
+                currentOption.yAxis = { show: false };
+            } else {
+                if (originalOption.xAxis) currentOption.xAxis = JSON.parse(JSON.stringify(originalOption.xAxis));
+                if (originalOption.yAxis) currentOption.yAxis = JSON.parse(JSON.stringify(originalOption.yAxis));
+            }
+            
+            window.myChart.setOption(currentOption, true);
+        }
+        
+        function resetChart() {
+            if (originalOption) {
+                currentOption = JSON.parse(JSON.stringify(originalOption));
+                window.myChart.setOption(currentOption, true);
+                
+                // 重置UI控件
+                document.getElementById('titleInput').value = originalOption.title?.text || '一周温度变化趋势';
+                document.getElementById('colorTheme').value = 'default';
+                if (originalOption.series && originalOption.series[0]) {
+                    document.getElementById('chartType').value = originalOption.series[0].type || 'bar';
+                }
+                
+                initSeriesControls();
+            }
+        }
+        
+        function downloadChart() {
+            const element = document.createElement('a');
+            const file = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+            element.href = URL.createObjectURL(file);
+            element.download = '一周温度变化趋势.html';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+        
+        function refreshChart() {
+            if (window.myChart) {
+                window.myChart.resize();
+            }
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            if (window.myChart) {
+                window.myChart.resize();
+            }
+        });
+        
+        // 点击图表外部关闭编辑面板
+        document.addEventListener('click', function(e) {
+            const editPanel = document.getElementById('editPanel');
+            const editButton = e.target.closest('button[onclick="toggleEditPanel()"]');
+            
+            if (!editPanel.contains(e.target) && !editButton && editPanel.style.display === 'block') {
+                editPanel.style.display = 'none';
+            }
+        });
+        </script>
+        </body>
+</html>
