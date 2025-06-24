@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>uhemuvedt</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 1200px;
+            position: relative;
+        }
+        #chart {
+            width: 100%;
+            height: 400px;
+            margin: 0 auto;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div class="chart-title">uhemuvedt</div>
+        <div id="chart">
+            <div class="loading">图表加载中...</div>
+        </div>
+    </div>
+    
+    <script>
+        // 初始化图表
+        var chartDom = document.getElementById('chart');
+        var myChart = echarts.init(chartDom, 'light');
+        window.myChart = myChart;
+        
+        // 图表配置
+        var option = {
+  "title": {
+    "text": "2024年产品销售数据",
+    "left": "center",
+    "textStyle": {
+      "fontSize": 18,
+      "fontWeight": "bold"
+    }
+  },
+  "tooltip": {
+    "trigger": "axis",
+    "axisPointer": {
+      "type": "shadow"
+    }
+  },
+  "legend": {
+    "top": "10%",
+    "left": "center"
+  },
+  "series": [
+    {
+      "name": "sales",
+      "type": "bar",
+      "data": [
+        120,
+        200,
+        150
+      ]
+    }
+  ],
+  "xAxis": {
+    "type": "category",
+    "data": [
+      "产品A",
+      "产品B",
+      "产品C"
+    ],
+    "name": "product"
+  },
+  "yAxis": {
+    "type": "value",
+    "name": "sales"
+  },
+  "grid": {
+    "left": "3%",
+    "right": "4%",
+    "bottom": "3%",
+    "containLabel": true
+  },
+  "animation": false
+};
+        
+        // 设置图表选项
+        myChart.setOption(option);
+        
+        // 保存原始配置供编辑功能使用
+        window.originalChartOption = JSON.parse(JSON.stringify(option));
+        window.currentChartOption = JSON.parse(JSON.stringify(option));
+        
+        // 响应式调整
+        
+        
+        // 图表加载完成后的回调
+        myChart.on('finished', function() {
+            console.log('图表渲染完成');
+            // 图表渲染完成后，确保编辑功能可用
+            if (typeof initializeEditPanel === 'function') {
+                // 延迟初始化，确保图表完全加载
+                setTimeout(() => {
+                    if (!window.originalOption) {
+                        window.originalOption = JSON.parse(JSON.stringify(myChart.getOption()));
+                        window.currentOption = JSON.parse(JSON.stringify(window.originalOption));
+                    }
+                }, 100);
+            }
+        });
+        
+        // 错误处理
+        myChart.on('error', function(error) {
+            console.error('图表渲染错误:', error);
+            document.getElementById('chart').innerHTML = '<div class="loading" style="color: red;">图表渲染失败，请检查数据格式</div>';
+        });
+        
+        // 图表点击事件
+        myChart.on('click', function(params) {
+            console.log('图表点击事件:', params);
+            // 可以在这里添加更多交互逻辑
+        });
+        
+        // 图表双击事件 - 快速打开编辑面板
+        myChart.on('dblclick', function(params) {
+            if (typeof toggleEditPanel === 'function') {
+                toggleEditPanel();
+            }
+        });
+    </script>
+
+        <!-- 图表编辑面板 -->
+        <div id="editPanel" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-width: 250px; display: none;">
+            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">📊 图表编辑</h4>
+            
+            <!-- 标题编辑 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">图表标题:</label>
+                <input type="text" id="titleInput" value="uhemuvedt" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; box-sizing: border-box;">
+                <button onclick="updateTitle()" style="margin-top: 5px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">更新标题</button>
+            </div>
+            
+            <!-- 数据系列控制 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">数据系列:</label>
+                <div id="seriesControls"></div>
+            </div>
+            
+            <!-- 颜色主题 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">颜色主题:</label>
+                <select id="colorTheme" onchange="updateColorTheme()" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                    <option value="default">默认</option>
+                    <option value="blue">蓝色系</option>
+                    <option value="green">绿色系</option>
+                    <option value="red">红色系</option>
+                    <option value="purple">紫色系</option>
+                    <option value="orange">橙色系</option>
+                </select>
+            </div>
+            
+            <!-- 图表类型切换 -->
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">图表类型:</label>
+                <select id="chartType" onchange="updateChartType()" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                    <option value="bar">柱状图</option>
+                    <option value="line">折线图</option>
+                    <option value="pie">饼图</option>
+                    <option value="scatter">散点图</option>
+                </select>
+            </div>
+            
+            <!-- 重置按钮 -->
+            <button onclick="resetChart()" style="width: 100%; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; margin-bottom: 10px;">🔄 重置图表</button>
+        </div>
+        
+        <!-- 功能按钮 -->
+        <div style="position: absolute; top: 10px; right: 10px; z-index: 1001;">
+            <button onclick="toggleEditPanel()" style="margin-right: 5px; padding: 5px 10px; background: #17a2b8; color: white; border: none; border-radius: 3px; cursor: pointer;">✏️ 编辑</button>
+            <button onclick="downloadChart()" style="margin-right: 5px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">📥 下载</button>
+            <button onclick="refreshChart()" style="margin-right: 5px; padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">🔄 刷新</button>
+            <button onclick="toggleFullscreen()" style="padding: 5px 10px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">⛶ 全屏</button>
+        </div>
+        
+        <script>
+        // 全局变量
+        let originalOption = null;
+        let currentOption = null;
+        
+        // 颜色主题配置
+        const colorThemes = {
+            'default': ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
+            'blue': ['#1f77b4', '#aec7e8', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#ff7f0e', '#ffbb78', '#2ca02c'],
+            'green': ['#2ca02c', '#98df8a', '#8c564b', '#c49c94', '#e377c2', '#f7b6d3', '#7f7f7f', '#c7c7c7', '#bcbd22'],
+            'red': ['#d62728', '#ff9896', '#2ca02c', '#98df8a', '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#e377c2'],
+            'purple': ['#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d3', '#7f7f7f', '#c7c7c7', '#bcbd22'],
+            'orange': ['#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#1f77b4', '#aec7e8', '#9467bd']
+        };
+        
+        function toggleEditPanel() {
+            const panel = document.getElementById('editPanel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+                initializeEditPanel();
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        
+        function initializeEditPanel() {
+            if (!originalOption) {
+                originalOption = JSON.parse(JSON.stringify(window.myChart.getOption()));
+                currentOption = JSON.parse(JSON.stringify(originalOption));
+            }
+            
+            // 初始化数据系列控制
+            initSeriesControls();
+            
+            // 设置当前图表类型
+            const chartTypeSelect = document.getElementById('chartType');
+            if (currentOption.series && currentOption.series[0]) {
+                chartTypeSelect.value = currentOption.series[0].type || 'bar';
+            }
+        }
+        
+        function initSeriesControls() {
+            const container = document.getElementById('seriesControls');
+            container.innerHTML = '';
+            
+            if (currentOption.series) {
+                currentOption.series.forEach((series, index) => {
+                    const seriesName = series.name || `系列 ${index + 1}`;
+                    const isVisible = series.data && series.data.length > 0;
+                    
+                    const controlDiv = document.createElement('div');
+                    controlDiv.style.cssText = 'margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = isVisible;
+                    checkbox.onchange = () => toggleSeries(index);
+                    
+                    const label = document.createElement('label');
+                    label.textContent = seriesName;
+                    label.style.cssText = 'margin-left: 5px; flex: 1; font-size: 12px;';
+                    
+                    const colorInput = document.createElement('input');
+                    colorInput.type = 'color';
+                    colorInput.value = getSeriesColor(index);
+                    colorInput.style.cssText = 'width: 30px; height: 20px; border: none; cursor: pointer;';
+                    colorInput.onchange = (e) => updateSeriesColor(index, e.target.value);
+                    
+                    controlDiv.appendChild(checkbox);
+                    controlDiv.appendChild(label);
+                    controlDiv.appendChild(colorInput);
+                    container.appendChild(controlDiv);
+                });
+            }
+        }
+        
+        function getSeriesColor(index) {
+            if (currentOption.color && currentOption.color[index]) {
+                return currentOption.color[index];
+            }
+            return colorThemes.default[index % colorThemes.default.length];
+        }
+        
+        function toggleSeries(index) {
+            if (!currentOption.legend) {
+                currentOption.legend = { selected: {} };
+            }
+            if (!currentOption.legend.selected) {
+                currentOption.legend.selected = {};
+            }
+            
+            const seriesName = currentOption.series[index].name || `系列 ${index + 1}`;
+            const isCurrentlyVisible = currentOption.legend.selected[seriesName] !== false;
+            currentOption.legend.selected[seriesName] = !isCurrentlyVisible;
+            
+            window.myChart.setOption(currentOption);
+        }
+        
+        function updateSeriesColor(index, color) {
+            if (!currentOption.color) {
+                currentOption.color = [...colorThemes.default];
+            }
+            currentOption.color[index] = color;
+            window.myChart.setOption(currentOption);
+        }
+        
+        function updateTitle() {
+            const newTitle = document.getElementById('titleInput').value;
+            if (!currentOption.title) {
+                currentOption.title = {};
+            }
+            currentOption.title.text = newTitle;
+            window.myChart.setOption(currentOption);
+            
+            // 更新页面标题
+            document.querySelector('.chart-title').textContent = newTitle;
+            document.title = newTitle;
+        }
+        
+        function updateColorTheme() {
+            const theme = document.getElementById('colorTheme').value;
+            currentOption.color = [...colorThemes[theme]];
+            window.myChart.setOption(currentOption);
+            initSeriesControls(); // 重新初始化颜色选择器
+        }
+        
+        function updateChartType() {
+            const newType = document.getElementById('chartType').value;
+            
+            if (currentOption.series) {
+                currentOption.series.forEach(series => {
+                    series.type = newType;
+                    
+                    // 根据图表类型调整特定配置
+                    if (newType === 'pie') {
+                        series.radius = '50%';
+                        series.center = ['50%', '50%'];
+                        delete series.stack;
+                    } else if (newType === 'line') {
+                        series.smooth = true;
+                        delete series.radius;
+                        delete series.center;
+                    } else if (newType === 'bar') {
+                        delete series.radius;
+                        delete series.center;
+                        delete series.smooth;
+                    } else if (newType === 'scatter') {
+                        series.symbolSize = 8;
+                        delete series.radius;
+                        delete series.center;
+                        delete series.smooth;
+                    }
+                });
+            }
+            
+            // 根据图表类型调整坐标轴显示
+            if (newType === 'pie') {
+                currentOption.xAxis = { show: false };
+                currentOption.yAxis = { show: false };
+            } else {
+                if (originalOption.xAxis) currentOption.xAxis = JSON.parse(JSON.stringify(originalOption.xAxis));
+                if (originalOption.yAxis) currentOption.yAxis = JSON.parse(JSON.stringify(originalOption.yAxis));
+            }
+            
+            window.myChart.setOption(currentOption, true);
+        }
+        
+        function resetChart() {
+            if (originalOption) {
+                currentOption = JSON.parse(JSON.stringify(originalOption));
+                window.myChart.setOption(currentOption, true);
+                
+                // 重置UI控件
+                document.getElementById('titleInput').value = originalOption.title?.text || 'uhemuvedt';
+                document.getElementById('colorTheme').value = 'default';
+                if (originalOption.series && originalOption.series[0]) {
+                    document.getElementById('chartType').value = originalOption.series[0].type || 'bar';
+                }
+                
+                initSeriesControls();
+            }
+        }
+        
+        function downloadChart() {
+            const element = document.createElement('a');
+            const file = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+            element.href = URL.createObjectURL(file);
+            element.download = 'uhemuvedt.html';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+        
+        function refreshChart() {
+            if (window.myChart) {
+                window.myChart.resize();
+            }
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            if (window.myChart) {
+                window.myChart.resize();
+            }
+        });
+        
+        // 点击图表外部关闭编辑面板
+        document.addEventListener('click', function(e) {
+            const editPanel = document.getElementById('editPanel');
+            const editButton = e.target.closest('button[onclick="toggleEditPanel()"]');
+            
+            if (!editPanel.contains(e.target) && !editButton && editPanel.style.display === 'block') {
+                editPanel.style.display = 'none';
+            }
+        });
+        </script>
+        </body>
+</html>
