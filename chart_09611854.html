@@ -1,0 +1,1130 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雷达图图表</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .chart-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .edit-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .edit-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        select:hover, button:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .chart-container {
+            height: calc(100vh - 80px);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-main {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-panel.open {
+            right: 0;
+        }
+        
+        .settings-content {
+            padding: 30px;
+        }
+        
+        .settings-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+        
+        .setting-group {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .setting-group label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+        }
+        
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .toolbar-left, .toolbar-right {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .chart-title {
+                font-size: 18px;
+            }
+            
+            .settings-panel {
+                width: 100vw;
+                right: -100vw;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <h1 class="chart-title" id="chartTitle">雷达图图表</h1>
+            <button class="edit-btn" onclick="editTitle()">✏️ 编辑标题</button>
+        </div>
+        <div class="toolbar-right">
+            <select id="themeSelector" onchange="changeTheme()">
+                <option value="default" >默认主题</option>
+<option value="dark" >暗黑主题</option>
+<option value="vintage" >复古主题</option>
+<option value="westeros" >权力的游戏主题</option>
+<option value="essos" >厄索斯主题</option>
+<option value="wonderland" >仙境主题</option>
+<option value="walden" >瓦尔登湖主题</option>
+<option value="chalk" >粉笔主题</option>
+<option value="infographic" >信息图主题</option>
+<option value="macarons" >马卡龙主题</option>
+<option value="roma" >罗马主题</option>
+<option value="shine" >闪亮主题</option>
+<option value="purple-passion" >紫色激情主题</option>
+            </select>
+            <select id="chartTypeSelector" onchange="changeChartType()">
+                <option value="bar" >柱状图</option>
+<option value="line" >折线图</option>
+<option value="pie" >饼图</option>
+<option value="scatter" >散点图</option>
+<option value="radar" >雷达图</option>
+<option value="funnel" >漏斗图</option>
+<option value="gauge" >仪表盘</option>
+<option value="heatmap" >热力图</option>
+<option value="treemap" >矩形树图</option>
+<option value="sunburst" >旭日图</option>
+<option value="graph" >关系图</option>
+<option value="sankey" >桑基图</option>
+<option value="parallel" >平行坐标</option>
+<option value="candlestick" >K线图</option>
+<option value="boxplot" >箱线图</option>
+            </select>
+            <button onclick="exportImage()">📷 导出图片</button>
+            <button onclick="exportHTML()">💾 导出HTML</button>
+            <button onclick="toggleFullscreen()">🔍 全屏</button>
+            <button onclick="refreshChart()">🔄 刷新</button>
+            <button onclick="showSettings()">⚙️ 设置</button>
+        </div>
+    </div>
+    
+    <!-- 图表容器 -->
+    <div class="chart-container">
+        <div id="chart_9a3ab743" class="chart-main"></div>
+    </div>
+    
+    <!-- 设置面板 -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-content">
+            <h3>图表设置</h3>
+            <div class="setting-group">
+                <label>背景颜色:</label>
+                <input type="color" id="bgColorPicker" onchange="changeBgColor()" value="#ffffff">
+            </div>
+            <div class="setting-group">
+                <label>动画效果:</label>
+                <input type="checkbox" id="animationToggle" onchange="toggleAnimation()" >
+            </div>
+            <div class="setting-group">
+                <label>数据缩放:</label>
+                <input type="checkbox" id="dataZoomToggle" onchange="toggleDataZoom()" >
+            </div>
+            <div class="setting-group">
+                <label>响应式:</label>
+                <input type="checkbox" id="responsiveToggle" onchange="toggleResponsive()" >
+            </div>
+            <button onclick="closeSettings()">关闭</button>
+        </div>
+    </div>
+    
+    <!-- 加载ECharts -->
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    
+    <!-- 主题文件 -->
+    
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/dark.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/vintage.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/westeros.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/essos.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/wonderland.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/walden.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/chalk.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/infographic.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/macarons.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/roma.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/shine.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/purple-passion.js"></script>
+        
+    
+    <script>
+        
+        // 全局变量
+        let myChart;
+        let currentConfig = {
+  "title": {
+    "text": "雷达图图表",
+    "left": "center",
+    "textStyle": {
+      "fontSize": 18,
+      "fontWeight": "bold"
+    }
+  },
+  "tooltip": {
+    "trigger": "item",
+    "axisPointer": {
+      "type": "line"
+    }
+  },
+  "legend": {
+    "top": "10%",
+    "left": "center"
+  },
+  "series": [
+    {
+      "name": "雷达图",
+      "type": "radar",
+      "data": [
+        {
+          "value": [
+            125000.0,
+            8500.0,
+            2850000.0,
+            78.5,
+            15.2,
+            4.8
+          ],
+          "name": "北京"
+        },
+        {
+          "value": [
+            118000.0,
+            8200.0,
+            2680000.0,
+            82.1,
+            18.5,
+            4.9
+          ],
+          "name": "上海"
+        },
+        {
+          "value": [
+            95000.0,
+            6800.0,
+            2250000.0,
+            65.2,
+            22.8,
+            4.6
+          ],
+          "name": "广东"
+        },
+        {
+          "value": [
+            88000.0,
+            6200.0,
+            2080000.0,
+            71.8,
+            25.6,
+            4.7
+          ],
+          "name": "广东"
+        },
+        {
+          "value": [
+            42000.0,
+            2800.0,
+            920000.0,
+            45.2,
+            28.5,
+            4.3
+          ],
+          "name": "广东"
+        },
+        {
+          "value": [
+            38000.0,
+            2500.0,
+            850000.0,
+            48.6,
+            24.2,
+            4.4
+          ],
+          "name": "广东"
+        },
+        {
+          "value": [
+            65000.0,
+            4500.0,
+            1520000.0,
+            58.9,
+            19.8,
+            4.5
+          ],
+          "name": "江苏"
+        },
+        {
+          "value": [
+            58000.0,
+            4100.0,
+            1380000.0,
+            62.4,
+            21.5,
+            4.6
+          ],
+          "name": "江苏"
+        },
+        {
+          "value": [
+            35000.0,
+            2400.0,
+            820000.0,
+            52.1,
+            18.9,
+            4.3
+          ],
+          "name": "江苏"
+        },
+        {
+          "value": [
+            72000.0,
+            5200.0,
+            1750000.0,
+            68.5,
+            26.8,
+            4.7
+          ],
+          "name": "浙江"
+        },
+        {
+          "value": [
+            45000.0,
+            3200.0,
+            1080000.0,
+            55.8,
+            23.5,
+            4.4
+          ],
+          "name": "浙江"
+        },
+        {
+          "value": [
+            32000.0,
+            2200.0,
+            750000.0,
+            48.2,
+            20.1,
+            4.2
+          ],
+          "name": "浙江"
+        },
+        {
+          "value": [
+            48000.0,
+            3400.0,
+            1150000.0,
+            52.6,
+            16.8,
+            4.3
+          ],
+          "name": "山东"
+        },
+        {
+          "value": [
+            52000.0,
+            3800.0,
+            1280000.0,
+            58.2,
+            19.5,
+            4.5
+          ],
+          "name": "山东"
+        },
+        {
+          "value": [
+            28000.0,
+            1900.0,
+            650000.0,
+            42.8,
+            15.2,
+            4.1
+          ],
+          "name": "山东"
+        },
+        {
+          "value": [
+            55000.0,
+            3900.0,
+            1320000.0,
+            48.5,
+            22.8,
+            4.4
+          ],
+          "name": "河南"
+        },
+        {
+          "value": [
+            25000.0,
+            1700.0,
+            580000.0,
+            38.2,
+            18.5,
+            4.0
+          ],
+          "name": "河南"
+        },
+        {
+          "value": [
+            62000.0,
+            4400.0,
+            1480000.0,
+            56.8,
+            24.5,
+            4.5
+          ],
+          "name": "湖北"
+        },
+        {
+          "value": [
+            48000.0,
+            3400.0,
+            1150000.0,
+            52.1,
+            21.8,
+            4.3
+          ],
+          "name": "湖南"
+        },
+        {
+          "value": [
+            68000.0,
+            4800.0,
+            1620000.0,
+            58.5,
+            26.2,
+            4.6
+          ],
+          "name": "四川"
+        },
+        {
+          "value": [
+            22000.0,
+            1500.0,
+            510000.0,
+            35.8,
+            19.5,
+            4.0
+          ],
+          "name": "四川"
+        },
+        {
+          "value": [
+            58000.0,
+            4100.0,
+            1380000.0,
+            54.2,
+            23.8,
+            4.4
+          ],
+          "name": "重庆"
+        },
+        {
+          "value": [
+            45000.0,
+            3200.0,
+            1080000.0,
+            48.5,
+            20.5,
+            4.3
+          ],
+          "name": "陕西"
+        },
+        {
+          "value": [
+            35000.0,
+            2500.0,
+            850000.0,
+            45.8,
+            18.2,
+            4.2
+          ],
+          "name": "福建"
+        },
+        {
+          "value": [
+            42000.0,
+            3000.0,
+            1020000.0,
+            58.5,
+            22.8,
+            4.5
+          ],
+          "name": "福建"
+        },
+        {
+          "value": [
+            38000.0,
+            2700.0,
+            920000.0,
+            42.5,
+            19.8,
+            4.2
+          ],
+          "name": "安徽"
+        },
+        {
+          "value": [
+            32000.0,
+            2200.0,
+            750000.0,
+            38.5,
+            17.5,
+            4.1
+          ],
+          "name": "江西"
+        },
+        {
+          "value": [
+            42000.0,
+            2900.0,
+            980000.0,
+            45.8,
+            16.2,
+            4.2
+          ],
+          "name": "辽宁"
+        },
+        {
+          "value": [
+            38000.0,
+            2600.0,
+            880000.0,
+            48.2,
+            18.5,
+            4.3
+          ],
+          "name": "辽宁"
+        },
+        {
+          "value": [
+            28000.0,
+            1900.0,
+            650000.0,
+            35.2,
+            14.8,
+            4.0
+          ],
+          "name": "吉林"
+        },
+        {
+          "value": [
+            32000.0,
+            2200.0,
+            750000.0,
+            38.5,
+            15.5,
+            4.1
+          ],
+          "name": "黑龙江"
+        },
+        {
+          "value": [
+            35000.0,
+            2400.0,
+            820000.0,
+            42.1,
+            17.8,
+            4.2
+          ],
+          "name": "河北"
+        },
+        {
+          "value": [
+            25000.0,
+            1700.0,
+            580000.0,
+            35.8,
+            16.2,
+            4.0
+          ],
+          "name": "河北"
+        },
+        {
+          "value": [
+            28000.0,
+            1900.0,
+            650000.0,
+            38.2,
+            16.8,
+            4.1
+          ],
+          "name": "山西"
+        },
+        {
+          "value": [
+            18000.0,
+            1200.0,
+            410000.0,
+            28.5,
+            14.2,
+            3.9
+          ],
+          "name": "内蒙古"
+        },
+        {
+          "value": [
+            45000.0,
+            3200.0,
+            1080000.0,
+            65.8,
+            19.5,
+            4.4
+          ],
+          "name": "天津"
+        },
+        {
+          "value": [
+            32000.0,
+            2200.0,
+            750000.0,
+            35.8,
+            20.5,
+            4.1
+          ],
+          "name": "广西"
+        },
+        {
+          "value": [
+            18000.0,
+            1200.0,
+            410000.0,
+            28.2,
+            17.8,
+            3.9
+          ],
+          "name": "广西"
+        },
+        {
+          "value": [
+            15000.0,
+            1000.0,
+            340000.0,
+            42.5,
+            25.8,
+            4.2
+          ],
+          "name": "海南"
+        },
+        {
+          "value": [
+            25000.0,
+            1700.0,
+            580000.0,
+            32.5,
+            22.8,
+            4.0
+          ],
+          "name": "贵州"
+        },
+        {
+          "value": [
+            35000.0,
+            2400.0,
+            820000.0,
+            38.5,
+            24.5,
+            4.2
+          ],
+          "name": "云南"
+        },
+        {
+          "value": [
+            5000.0,
+            300.0,
+            100000.0,
+            15.2,
+            18.5,
+            3.8
+          ],
+          "name": "西藏"
+        },
+        {
+          "value": [
+            18000.0,
+            1200.0,
+            410000.0,
+            28.5,
+            16.8,
+            3.9
+          ],
+          "name": "甘肃"
+        },
+        {
+          "value": [
+            8000.0,
+            500.0,
+            170000.0,
+            22.5,
+            15.2,
+            3.8
+          ],
+          "name": "青海"
+        },
+        {
+          "value": [
+            12000.0,
+            800.0,
+            270000.0,
+            25.8,
+            17.5,
+            3.9
+          ],
+          "name": "宁夏"
+        },
+        {
+          "value": [
+            22000.0,
+            1500.0,
+            510000.0,
+            28.5,
+            19.8,
+            4.0
+          ],
+          "name": "新疆"
+        }
+      ]
+    }
+  ],
+  "radar": {
+    "indicator": [
+      {
+        "name": "用户数量",
+        "max": 125000.0
+      },
+      {
+        "name": "订单数量",
+        "max": 8500.0
+      },
+      {
+        "name": "销售额",
+        "max": 2850000.0
+      },
+      {
+        "name": "市场渗透率",
+        "max": 82.1
+      },
+      {
+        "name": "增长率",
+        "max": 28.5
+      },
+      {
+        "name": "客户满意度",
+        "max": 4.9
+      }
+    ]
+  }
+};
+        let currentTheme = 'None';
+        let isFullscreen = false;
+        
+        // 初始化图表
+        function initChart() {
+            const dom = document.getElementById('chart_9a3ab743');
+            myChart = echarts.init(dom, currentTheme === 'default' ? null : currentTheme, {
+                renderer: 'canvas',
+                useDirtyRect: false
+            });
+            
+            // 设置配置
+            if (currentConfig && typeof currentConfig === 'object') {
+                myChart.setOption(currentConfig);
+            }
+            
+            // 响应式处理
+            if (none) {
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        }
+        
+        // 更改主题
+        function changeTheme() {
+            const themeSelector = document.getElementById('themeSelector');
+            const newTheme = themeSelector.value;
+            currentTheme = newTheme;
+            
+            // 销毁旧图表
+            if (myChart) {
+                myChart.dispose();
+            }
+            
+            // 重新初始化
+            const dom = document.getElementById('chart_9a3ab743');
+            myChart = echarts.init(dom, newTheme === 'default' ? null : newTheme);
+            myChart.setOption(currentConfig);
+        }
+        
+        // 更改图表类型
+        function changeChartType() {
+            const typeSelector = document.getElementById('chartTypeSelector');
+            const newType = typeSelector.value;
+            
+            // 更新配置中的图表类型
+            if (currentConfig.series) {
+                if (Array.isArray(currentConfig.series)) {
+                    currentConfig.series.forEach(series => {
+                        series.type = newType;
+                    });
+                } else {
+                    currentConfig.series.type = newType;
+                }
+                
+                // 根据图表类型调整配置
+                adjustConfigForChartType(newType);
+                myChart.setOption(currentConfig, true);
+            }
+        }
+        
+        // 根据图表类型调整配置
+        function adjustConfigForChartType(type) {
+            switch(type) {
+                case 'pie':
+                    // 饼图不需要坐标轴
+                    delete currentConfig.xAxis;
+                    delete currentConfig.yAxis;
+                    break;
+                case 'radar':
+                    // 雷达图需要特殊配置
+                    if (!currentConfig.radar) {
+                        currentConfig.radar = {
+                            indicator: [
+                                { name: '指标1', max: 100 },
+                                { name: '指标2', max: 100 },
+                                { name: '指标3', max: 100 }
+                            ]
+                        };
+                    }
+                    break;
+                case 'bar':
+                case 'line':
+                    // 确保有坐标轴
+                    if (!currentConfig.xAxis) {
+                        currentConfig.xAxis = { type: 'category' };
+                    }
+                    if (!currentConfig.yAxis) {
+                        currentConfig.yAxis = { type: 'value' };
+                    }
+                    break;
+            }
+        }
+        
+        // 编辑标题
+        function editTitle() {
+            const titleElement = document.getElementById('chartTitle');
+            const currentTitle = titleElement.textContent;
+            const newTitle = prompt('请输入新的图表标题:', currentTitle);
+            
+            if (newTitle && newTitle.trim() !== '') {
+                titleElement.textContent = newTitle.trim();
+                
+                // 更新图表配置中的标题
+                if (!currentConfig.title) {
+                    currentConfig.title = {};
+                }
+                currentConfig.title.text = newTitle.trim();
+                myChart.setOption(currentConfig);
+                
+                // 更新页面标题
+                document.title = newTitle.trim();
+            }
+        }
+        
+        // 导出图片
+        function exportImage() {
+            const url = myChart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff'
+            });
+            
+            const link = document.createElement('a');
+            link.download = `chart_${new Date().getTime()}.png`;
+            link.href = url;
+            link.click();
+        }
+        
+        // 导出HTML
+        function exportHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = `chart_${new Date().getTime()}.html`;
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 全屏切换
+        function toggleFullscreen() {
+            const chartContainer = document.querySelector('.chart-container');
+            
+            if (!isFullscreen) {
+                chartContainer.classList.add('fullscreen');
+                isFullscreen = true;
+            } else {
+                chartContainer.classList.remove('fullscreen');
+                isFullscreen = false;
+            }
+            
+            // 延迟调整图表大小
+            setTimeout(() => {
+                myChart.resize();
+            }, 300);
+        }
+        
+        // 刷新图表
+        function refreshChart() {
+            myChart.clear();
+            myChart.setOption(currentConfig);
+        }
+        
+        // 显示设置面板
+        function showSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.add('open');
+        }
+        
+        // 关闭设置面板
+        function closeSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.remove('open');
+        }
+        
+        // 更改背景颜色
+        function changeBgColor() {
+            const colorPicker = document.getElementById('bgColorPicker');
+            const color = colorPicker.value;
+            document.body.style.background = color;
+        }
+        
+        // 切换动画
+        function toggleAnimation() {
+            const toggle = document.getElementById('animationToggle');
+            const enabled = toggle.checked;
+            
+            if (currentConfig.animation !== undefined) {
+                currentConfig.animation = enabled;
+                myChart.setOption(currentConfig);
+            }
+        }
+        
+        // 切换数据缩放
+        function toggleDataZoom() {
+            const toggle = document.getElementById('dataZoomToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                currentConfig.dataZoom = [
+                    {
+                        type: 'slider',
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        type: 'inside'
+                    }
+                ];
+            } else {
+                delete currentConfig.dataZoom;
+            }
+            
+            myChart.setOption(currentConfig, true);
+        }
+        
+        // 切换响应式
+        function toggleResponsive() {
+            const toggle = document.getElementById('responsiveToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            } else {
+                window.removeEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        exportHTML();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        exportImage();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        toggleFullscreen();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshChart();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
+            }
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+        });
+        
+        // 点击空白处关闭设置面板
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('settingsPanel');
+            const settingsBtn = e.target.closest('button[onclick="showSettings()"]');
+            
+            if (!panel.contains(e.target) && !settingsBtn && panel.classList.contains('open')) {
+                closeSettings();
+            }
+        });
+        
+    </script>
+</body>
+</html>
+        
