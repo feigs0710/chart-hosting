@@ -1,0 +1,1234 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qq</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .chart-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .edit-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .edit-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        select:hover, button:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .chart-container {
+            height: calc(100vh - 80px);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-main {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-panel.open {
+            right: 0;
+        }
+        
+        .settings-content {
+            padding: 30px;
+        }
+        
+        .settings-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+        
+        .setting-group {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .setting-group label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+        }
+        
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .toolbar-left, .toolbar-right {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .chart-title {
+                font-size: 18px;
+            }
+            
+            .settings-panel {
+                width: 100vw;
+                right: -100vw;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <h1 class="chart-title" id="chartTitle">qq</h1>
+            <button class="edit-btn" onclick="editTitle()">✏️ 编辑标题</button>
+        </div>
+        <div class="toolbar-right">
+            <select id="themeSelector" onchange="changeTheme()">
+                <option value="default" >默认主题</option>
+<option value="dark" >暗黑主题</option>
+<option value="vintage" >复古主题</option>
+<option value="westeros" >权力的游戏主题</option>
+<option value="essos" >厄索斯主题</option>
+<option value="wonderland" >仙境主题</option>
+<option value="walden" >瓦尔登湖主题</option>
+<option value="chalk" >粉笔主题</option>
+<option value="infographic" >信息图主题</option>
+<option value="macarons" >马卡龙主题</option>
+<option value="roma" >罗马主题</option>
+<option value="shine" >闪亮主题</option>
+<option value="purple-passion" >紫色激情主题</option>
+            </select>
+            <select id="chartTypeSelector" onchange="changeChartType()">
+                <option value="bar" >柱状图</option>
+<option value="line" >折线图</option>
+<option value="pie" >饼图</option>
+<option value="scatter" >散点图</option>
+<option value="radar" >雷达图</option>
+<option value="funnel" >漏斗图</option>
+<option value="gauge" >仪表盘</option>
+<option value="heatmap" >热力图</option>
+<option value="treemap" >矩形树图</option>
+<option value="sunburst" >旭日图</option>
+<option value="graph" >关系图</option>
+<option value="sankey" >桑基图</option>
+<option value="parallel" >平行坐标</option>
+<option value="candlestick" >K线图</option>
+<option value="boxplot" >箱线图</option>
+            </select>
+            <button onclick="exportImage()">📷 导出图片</button>
+            <button onclick="exportHTML()">💾 导出HTML</button>
+            <button onclick="toggleFullscreen()">🔍 全屏</button>
+            <button onclick="refreshChart()">🔄 刷新</button>
+            <button onclick="showSettings()">⚙️ 设置</button>
+        </div>
+    </div>
+    
+    <!-- 图表容器 -->
+    <div class="chart-container">
+        <div id="chart_d6a9d66c" class="chart-main"></div>
+    </div>
+    
+    <!-- 设置面板 -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-content">
+            <h3>图表设置</h3>
+            <div class="setting-group">
+                <label>背景颜色:</label>
+                <input type="color" id="bgColorPicker" onchange="changeBgColor()" value="#ffffff">
+            </div>
+            <div class="setting-group">
+                <label>动画效果:</label>
+                <input type="checkbox" id="animationToggle" onchange="toggleAnimation()" >
+            </div>
+            <div class="setting-group">
+                <label>数据缩放:</label>
+                <input type="checkbox" id="dataZoomToggle" onchange="toggleDataZoom()" >
+            </div>
+            <div class="setting-group">
+                <label>响应式:</label>
+                <input type="checkbox" id="responsiveToggle" onchange="toggleResponsive()" >
+            </div>
+            <button onclick="closeSettings()">关闭</button>
+        </div>
+    </div>
+    
+    <!-- 加载ECharts -->
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    
+    <!-- 主题文件 -->
+    
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/dark.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/vintage.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/westeros.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/essos.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/wonderland.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/walden.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/chalk.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/infographic.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/macarons.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/roma.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/shine.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/purple-passion.js"></script>
+        
+    
+    <script>
+        
+        // 全局变量
+        let myChart;
+        let currentConfig = {
+  "instanceList": [
+    {
+      "name": "代数",
+      "property": null,
+      "relation": null,
+      "uri": "http://edukg.org/knowledge/3.0/instance/math#xlore-E18903",
+      "abstractMsg": "",
+      "classList": [
+        {
+          "id": "Resource",
+          "label": ""
+        },
+        {
+          "id": "edukg_cls_math__main-C0",
+          "label": "数学实体"
+        },
+        {
+          "id": "edukg_cls_math__main-C2",
+          "label": "数学领域"
+        }
+      ]
+    }
+  ],
+  "predicateSearchVO": null,
+  "questionList": {
+    "pageNo": 1,
+    "pageSize": 10,
+    "totalCount": 9,
+    "data": [
+      {
+        "questionId": "2015GaoKao-2015_98-98_1",
+        "questionInfo": "22.我国古代数学名著《九章算术》有“米谷粒分”题：粮仓开仓收粮，有人送来米1534石，验得米内夹谷，抽样取米一把，数得254粒内夹谷28粒，则这批米内夹谷约为（   ）||A.134石||B.169石||C.338石||D.1365石||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "98-1",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "B"
+              ],
+              "Choices": [],
+              "Keypoint": [],
+              "Q_id": "1",
+              "Question": "22.我国古代数学名著《九章算术》有“米谷粒分”题：粮仓开仓收粮，有人送来米1534石，验得米内夹谷，抽样取米一把，数得254粒内夹谷28粒，则这批米内夹谷约为（   ）",
+              "QuestionType": "choosing"
+            }
+          ],
+          "TestName": "2015年高考真题 文科数学 (湖北卷)",
+          "Content": "",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/6cf90740be1e650e52ea99fe?key=20170214",
+          "Subject": "math",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2017GaoKao-2017_20-20_10",
+        "questionInfo": "我国古代数学家刘徽创立的“割圆术”可以估算圆周率π，理论上能把π的值计算到任意精度．祖冲之继承并发展了“割圆术”，将π的值精确到小数点后七位，其结果领先世界一千多年．“割圆术”的第一步是计算单位圆内接正六边形的面积<img>20-10-0</img>，．||$\\frac{3 \\sqrt{3}}{2}$||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "20-10",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "$\\frac{3 \\sqrt{3}}{2}$"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "应用题",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "0",
+              "Question": "我国古代数学家刘徽创立的“割圆术”可以估算圆周率π，理论上能把π的值计算到任意精度．祖冲之继承并发展了“割圆术”，将π的值精确到小数点后七位，其结果领先世界一千多年．“割圆术”的第一步是计算单位圆内接正六边形的面积<img>20-10-0</img>，．",
+              "QuestionType": "filling-number"
+            }
+          ],
+          "TestName": "2017年高考真题 语文 (山东卷)",
+          "Content": "",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/3559b075f46527d3240ce0b3?key=20170214",
+          "Subject": "math",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2021GaoKao-2021_32-32_3",
+        "questionInfo": "X、Y为第三周期元素、Y最高正价与最低负价的代数和为6，二者形成的一种化合物能以[XY4]+[XY6]-的形式存在。下列说法错误的是||原子半径：X>Y||简单氢化物的还原性：X>Y||同周期元素形成的单质中Y氧化性最强||同周期中第一电离能小于X的元素有4种||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "32-3",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "D"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "元素周期表的应用",
+                  "uri": "http://edukg.org/knowledge/3.0/instance/chemistry#main-E1478"
+                }
+              ],
+              "Q_id": "0",
+              "Question": "X、Y为第三周期元素、Y最高正价与最低负价的代数和为6，二者形成的一种化合物能以[XY4]+[XY6]-的形式存在。下列说法错误的是",
+              "QuestionType": "choosing"
+            }
+          ],
+          "TestName": "2021年高考真题 化学 (山东卷)",
+          "Content": "",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/6cd1e9cd5fbfc77da269b14c?key=20170214",
+          "Subject": "chemistry",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2015GaoKao-2015_6-6_10",
+        "questionInfo": "11下边程序框图的算法思路来源于我国古代数学名著《九章算术》中的“更相减损术”,执行该程序框图,若输入的<img>6-10-0</img>分别为14,18,则输出的<img>6-10-1</img>为（   ）\\n<img>6-10-2</img>\\n<img>6-10-3</img>\\n<img>6-10-4</img>\\n<img>6-10-5</img>\\n<img>6-10-6</img>||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "6-10",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "B"
+              ],
+              "Choices": null,
+              "Keypoint": [],
+              "Q_id": "10",
+              "Question": "11下边程序框图的算法思路来源于我国古代数学名著《九章算术》中的“更相减损术”,执行该程序框图,若输入的<img>6-10-0</img>分别为14,18,则输出的<img>6-10-1</img>为（   ）\\n<img>6-10-2</img>\\n<img>6-10-3</img>\\n<img>6-10-4</img>\\n<img>6-10-5</img>\\n<img>6-10-6</img>",
+              "QuestionType": "answering-others"
+            }
+          ],
+          "TestName": "2015年高考真题 文科数学 (全国新课标卷II)",
+          "Content": "",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/8fe488eb172ded630b1cb626?key=20170214",
+          "Subject": "math",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2018GaoKao-2018_33-33_10",
+        "questionInfo": "我国古代数学著作《张邱建算经》中记载百鸡问题：“今有鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一。凡百钱，买鸡百只，问鸡翁、母、雏各几何？”设鸡翁，鸡母，鸡雏个数分别为<img>33-10-0</img>，<img>33-10-1</img>，<img>33-10-2</img>，则<img>33-10-3</img>当<img>33-10-4</img>时，<img>33-10-5</img>________，<img>33-10-6</img>________．||8;11||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "33-10",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "8;11"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "应用题",
+                  "uri": ""
+                },
+                {
+                  "label": "方程",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "0",
+              "Question": "我国古代数学著作《张邱建算经》中记载百鸡问题：“今有鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一。凡百钱，买鸡百只，问鸡翁、母、雏各几何？”设鸡翁，鸡母，鸡雏个数分别为<img>33-10-0</img>，<img>33-10-1</img>，<img>33-10-2</img>，则<img>33-10-3</img>当<img>33-10-4</img>时，<img>33-10-5</img>________，<img>33-10-6</img>________．",
+              "QuestionType": "filling-number"
+            }
+          ],
+          "TestName": "2018年高考真题 数学 (浙江卷)",
+          "Content": "",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/a309536648d7c1c708a1456b?key=20170214",
+          "Subject": "math",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2021GaoKao-2021_25-25_10",
+        "questionInfo": "我国古代数学家赵爽用弦图给出了勾股定理的证明.弦图是由四个全等的直角三角形和中间的一个小正方形拼成的一个大正方形(如图所示).若直角三角形直角边的长分别是3，4，记大正方形的面积为<img>25-10-0</img>，小正方形的面积为<img>25-10-1</img>，则<img>25-10-2</img>________.\\n<img>25-10-3</img>||25||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "25-10",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "25"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "平面几何",
+                  "uri": ""
+                },
+                {
+                  "label": "勾股定理",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "0",
+              "Question": "我国古代数学家赵爽用弦图给出了勾股定理的证明.弦图是由四个全等的直角三角形和中间的一个小正方形拼成的一个大正方形(如图所示).若直角三角形直角边的长分别是3，4，记大正方形的面积为<img>25-10-0</img>，小正方形的面积为<img>25-10-1</img>，则<img>25-10-2</img>________.\\n<img>25-10-3</img>",
+              "QuestionType": "filling-number"
+            }
+          ],
+          "TestName": "2021年高考真题 数学 (浙江卷)",
+          "Content": "",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/259b90ffba0d4a7302763a78?key=20170214",
+          "Subject": "math",
+          "pics": {
+            "25-10-2": "/data/parser/GaoKao_data/GaoKao_generate/img/2021GaoKao/25-10-2.jpg",
+            "25-10-3": "/data/parser/GaoKao_data/GaoKao_generate/img/2021GaoKao/25-10-3.jpg",
+            "25-10-0": "/data/parser/GaoKao_data/GaoKao_generate/img/2021GaoKao/25-10-0.jpg",
+            "25-10-1": "/data/parser/GaoKao_data/GaoKao_generate/img/2021GaoKao/25-10-1.jpg"
+          }
+        }
+      },
+      {
+        "questionId": "2020GaoKao-2020_9-9_19",
+        "questionInfo": "若<img>9-19-5</img>，求b；||2||若<img>9-19-6</img>，<img>9-19-7</img>与x轴交点记为<img>9-19-8</img>,P<img>9-19-9</img>是曲线<img>9-19-10</img>上一点，且在第一象限，并满足<img>9-19-11</img>，求∠<img>9-19-12</img>；||$\\frac{11}{16}$||过点<img>9-19-13</img>且斜率为<img>9-19-14</img>的直线<img>9-19-15</img>交曲线<img>9-19-16</img>于M、N两点，用b的代数式表示<img>9-19-17</img>，并求出<img>9-19-18</img>的取值范围。||$(6+2 \\sqrt{5},+\\infty)$||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "9-19",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "2"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "圆锥曲线",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "0",
+              "Question": "若<img>9-19-5</img>，求b；",
+              "QuestionType": "answering-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "$\\frac{11}{16}$"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "双曲线",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "1",
+              "Question": "若<img>9-19-6</img>，<img>9-19-7</img>与x轴交点记为<img>9-19-8</img>,P<img>9-19-9</img>是曲线<img>9-19-10</img>上一点，且在第一象限，并满足<img>9-19-11</img>，求∠<img>9-19-12</img>；",
+              "QuestionType": "answering-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "$(6+2 \\sqrt{5},+\\infty)$"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "向量",
+                  "uri": ""
+                },
+                {
+                  "label": "取值范围",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "2",
+              "Question": "过点<img>9-19-13</img>且斜率为<img>9-19-14</img>的直线<img>9-19-15</img>交曲线<img>9-19-16</img>于M、N两点，用b的代数式表示<img>9-19-17</img>，并求出<img>9-19-18</img>的取值范围。",
+              "QuestionType": "answering-others"
+            }
+          ],
+          "TestName": "2020年高考真题 数学 (上海卷)",
+          "Content": "双曲线<img>9-19-0</img>，圆<img>9-19-1</img>在第一象限交点为A，<img>9-19-2</img>，曲线<img>9-19-3</img>。\\n<img>9-19-4</img>",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/da6106d449649b6648d747ed?key=20170214",
+          "Subject": "math",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2021GaoKao-2021_55-55_17",
+        "questionInfo": "基态硅原子最外层的电子排布图为________，晶体硅和碳化硅熔点较高的是________(填化学式)；||<img>55-17-26</img>；     SiC   ||硅和卤素单质反应可以得到<img>55-17-0</img>，<img>55-17-1</img>的熔沸点如下表：<img>55-17-2</img>①0℃时，<img>55-17-3</img>、<img>55-17-4</img>、<img>55-17-5</img>、<img>55-17-6</img>呈液态的是________(填化学式)，沸点依次升高的原因是________，气态<img>55-17-7</img>分子的空间构型是________；\\n②<img>55-17-8</img>与N-甲基咪唑<img>55-17-9</img>反应可以得到<img>55-17-10</img>，其结构如图所示：\\n<img>55-17-11</img>\\nN-甲基咪唑分子中碳原子的杂化轨道类型为________，H、C、N的电负性由大到小的顺序为________，1个<img>55-17-12</img>中含有________个<img>55-17-13</img>键；||SiCl4     SiX4都是结构相似的分子晶体，相对分子质量依次增大，分子间作用力依次增大     正四面体形    ; sp2、sp3；    N>C>H     54   ||下图是<img>55-17-14</img>、<img>55-17-15</img>、<img>55-17-16</img>三种元素形成<img>55-17-17</img>某化合物的晶胞示意图。\\n<img>55-17-18</img>\\n①己知化合物中<img>55-17-19</img>和<img>55-17-20</img>的原子个数比为1：4，图中Z表示________原子(填元素符号)，该化合物的化学式为________；\\n②已知该晶胞的晶胞参数分别为anm、bnm、cnm，<img>55-17-21</img>，则该晶体的密度<img>55-17-22</img>________<img>55-17-23</img>(设阿伏加德罗常数的值为<img>55-17-24</img>，用含a、b、c、<img>55-17-25</img>的代数式表示)。||O     Mg2GeO4     =$\\frac{740}{\\mathrm{abcN}_{\\mathrm{A}}}$×1021||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "55-17",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "<img>55-17-26</img>；     SiC   "
+              ],
+              "Choices": [],
+              "Keypoint": [],
+              "Q_id": "0",
+              "Question": "基态硅原子最外层的电子排布图为________，晶体硅和碳化硅熔点较高的是________(填化学式)；",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "SiCl4     SiX4都是结构相似的分子晶体，相对分子质量依次增大，分子间作用力依次增大     正四面体形    ; sp2、sp3；    N>C>H     54   "
+              ],
+              "Choices": [],
+              "Keypoint": [],
+              "Q_id": "1",
+              "Question": "硅和卤素单质反应可以得到<img>55-17-0</img>，<img>55-17-1</img>的熔沸点如下表：<img>55-17-2</img>①0℃时，<img>55-17-3</img>、<img>55-17-4</img>、<img>55-17-5</img>、<img>55-17-6</img>呈液态的是________(填化学式)，沸点依次升高的原因是________，气态<img>55-17-7</img>分子的空间构型是________；\\n②<img>55-17-8</img>与N-甲基咪唑<img>55-17-9</img>反应可以得到<img>55-17-10</img>，其结构如图所示：\\n<img>55-17-11</img>\\nN-甲基咪唑分子中碳原子的杂化轨道类型为________，H、C、N的电负性由大到小的顺序为________，1个<img>55-17-12</img>中含有________个<img>55-17-13</img>键；",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "O     Mg2GeO4     =$\\frac{740}{\\mathrm{abcN}_{\\mathrm{A}}}$×1021"
+              ],
+              "Choices": [],
+              "Keypoint": [],
+              "Q_id": "2",
+              "Question": "下图是<img>55-17-14</img>、<img>55-17-15</img>、<img>55-17-16</img>三种元素形成<img>55-17-17</img>某化合物的晶胞示意图。\\n<img>55-17-18</img>\\n①己知化合物中<img>55-17-19</img>和<img>55-17-20</img>的原子个数比为1：4，图中Z表示________原子(填元素符号)，该化合物的化学式为________；\\n②已知该晶胞的晶胞参数分别为anm、bnm、cnm，<img>55-17-21</img>，则该晶体的密度<img>55-17-22</img>________<img>55-17-23</img>(设阿伏加德罗常数的值为<img>55-17-24</img>，用含a、b、c、<img>55-17-25</img>的代数式表示)。",
+              "QuestionType": "filling-others"
+            }
+          ],
+          "TestName": "2021年高考真题 化学 (湖南卷)",
+          "Content": "18[选修3：物质结构与性质]硅、锗(Ge)及其化合物广泛应用于光电材料领域。回答下列问题：",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/0b1000270066f5335a8121d5?key=20170214",
+          "Subject": "chemistry",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      },
+      {
+        "questionId": "2021GaoKao-2021_42-42_16",
+        "questionInfo": "在KH2PO4的四种组成元素各自所能形成的简单离子中，核外电子排布相同的是________(填离子符号)。||<img>42-16-11</img>和<img>42-16-12</img>||原子中运动的电子有两种相反的自旋状态，若一种自旋状态用+<img>42-16-1</img>表示，与之相反的用-<img>42-16-2</img>表示，称为电子的自旋磁量子数.对于基态的磷原子，其价电子自旋磁量子数的代数和为________。||<img>42-16-13</img>或<img>42-16-14</img>||已知有关氨、磷的单键和三键的键能(kJ•mol-1)如表：\\n<img>42-16-3</img>\\n从能量角度看，氮以N2、而白磷以P4(结构式可表示为<img>42-16-4</img>)形式存在的原因是________。||在原子数目相同的条件下，N2比N4具有更低的能量，而P4比P2具有更低的能量，能量越低越稳定   ||已知KH2PO4是次磷酸的正盐，H3PO2的结构式为________，其中P采取________杂化方式。||sp3   ||与PO<img>42-16-5</img>电子总数相同的等电子体的分子式为________。||SiF4、SO2F2等   ||磷酸通过分子间脱水缩合形成多磷酸，如：\\n<img>42-16-6</img>\\n如果有n个磷酸分子间脱水形成环状的多磷酸，则相应的酸根可写为________。||||分别用○、●表示H2PO<img>42-16-7</img>和K+，KH2PO4晶体的四方晶胞如图(a)所示，图(b)、图(c)分别显示的是H2PO<img>42-16-8</img>、K+在晶胞xz面、yz面上的位置：\\n<img>42-16-9</img>\\n①若晶胞底边的边长均为apm、高为cpm，阿伏加德罗常数的值为NA，晶体的密度________g•cm-3(写出表达式)。\\n②晶胞在x轴方向的投影图为________(填标号)。\\n<img>42-16-10</img>||<img>42-16-17</img>B||",
+        "questionData": {
+          "Grade": 12,
+          "ID": "42-16",
+          "Questions": [
+            {
+              "Analysis": "",
+              "Answer": [
+                "<img>42-16-11</img>和<img>42-16-12</img>"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "原子核外电子的排布",
+                  "uri": "http://edukg.org/knowledge/3.0/instance/chemistry#main-E2488"
+                }
+              ],
+              "Q_id": "0",
+              "Question": "在KH2PO4的四种组成元素各自所能形成的简单离子中，核外电子排布相同的是________(填离子符号)。",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "<img>42-16-13</img>或<img>42-16-14</img>"
+              ],
+              "Choices": [],
+              "Keypoint": [],
+              "Q_id": "1",
+              "Question": "原子中运动的电子有两种相反的自旋状态，若一种自旋状态用+<img>42-16-1</img>表示，与之相反的用-<img>42-16-2</img>表示，称为电子的自旋磁量子数.对于基态的磷原子，其价电子自旋磁量子数的代数和为________。",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "在原子数目相同的条件下，N2比N4具有更低的能量，而P4比P2具有更低的能量，能量越低越稳定   "
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "能量最低原理",
+                  "uri": "http://edukg.org/knowledge/3.0/instance/chemistry#main-E403"
+                }
+              ],
+              "Q_id": "2",
+              "Question": "已知有关氨、磷的单键和三键的键能(kJ•mol-1)如表：\\n<img>42-16-3</img>\\n从能量角度看，氮以N2、而白磷以P4(结构式可表示为<img>42-16-4</img>)形式存在的原因是________。",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "sp3   "
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "杂化方式",
+                  "uri": ""
+                },
+                {
+                  "label": "结构式",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "3",
+              "Question": "已知KH2PO4是次磷酸的正盐，H3PO2的结构式为________，其中P采取________杂化方式。",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "SiF4、SO2F2等   "
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "等电子体",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "4",
+              "Question": "与PO<img>42-16-5</img>电子总数相同的等电子体的分子式为________。",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                ""
+              ],
+              "Choices": [],
+              "Keypoint": [],
+              "Q_id": "5",
+              "Question": "磷酸通过分子间脱水缩合形成多磷酸，如：\\n<img>42-16-6</img>\\n如果有n个磷酸分子间脱水形成环状的多磷酸，则相应的酸根可写为________。",
+              "QuestionType": "filling-others"
+            },
+            {
+              "Analysis": "",
+              "Answer": [
+                "<img>42-16-17</img>B"
+              ],
+              "Choices": [],
+              "Keypoint": [
+                {
+                  "label": "晶胞投影",
+                  "uri": ""
+                },
+                {
+                  "label": "晶体密度计算",
+                  "uri": ""
+                }
+              ],
+              "Q_id": "6",
+              "Question": "分别用○、●表示H2PO<img>42-16-7</img>和K+，KH2PO4晶体的四方晶胞如图(a)所示，图(b)、图(c)分别显示的是H2PO<img>42-16-8</img>、K+在晶胞xz面、yz面上的位置：\\n<img>42-16-9</img>\\n①若晶胞底边的边长均为apm、高为cpm，阿伏加德罗常数的值为NA，晶体的密度________g•cm-3(写出表达式)。\\n②晶胞在x轴方向的投影图为________(填标号)。\\n<img>42-16-10</img>",
+              "QuestionType": "filling"
+            }
+          ],
+          "TestName": "2021年高考真题 化学 (河北卷)",
+          "Content": "KH2PO4晶体具有优异的非线性光学性能。我国科学工作者制备的超大KH2PO4晶体已应用于大功率固体激光器，填补了国家战略空白。回答下列问题：",
+          "SourceLink": "https://tiku.baidu.com/tikupc/paperdetail/ef89b1dd360cba1aa911da04?key=20170214",
+          "Subject": "chemistry",
+          "pics": {
+            "25-10-2": null,
+            "25-10-3": null,
+            "25-10-0": null,
+            "25-10-1": null
+          }
+        }
+      }
+    ]
+  },
+  "bookList": {
+    "data": [
+      {
+        "html": null,
+        "htmlName": null,
+        "edition": "人教版",
+        "editionTime": "2007年5月第2版",
+        "isbn": "57932594609459715",
+        "picBasePath": "/data/textbook/562",
+        "subject": "数学",
+        "bookName": "数学选修3-1数学史选讲教师教学用书",
+        "chapterList": [
+          {
+            "bookId": "JyfQk4gBwlPdQ5zgM6rY",
+            "example": "三、拓展资源——代数学历史",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "html": null,
+        "htmlName": null,
+        "edition": "北师版",
+        "editionTime": "2013年6月第2版",
+        "isbn": "227012952483524839",
+        "picBasePath": "/data/textbook/827",
+        "subject": "数学",
+        "bookName": "数学教师教学用书七年级上册（北师）",
+        "chapterList": [
+          {
+            "bookId": "GyfUk4gBwlPdQ5zgYe7x",
+            "example": "1.经历数与代数的抽象、运算与建模等过程，掌握数与代数的基础知识和基本技能.",
+            "score": 0
+          },
+          {
+            "bookId": "8ifUk4gBwlPdQ5zgX-2k",
+            "example": "代数式",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "html": null,
+        "htmlName": null,
+        "edition": "教科版",
+        "editionTime": "2013年4月第3版",
+        "isbn": "306069774613746129",
+        "picBasePath": "/data/textbook/127",
+        "subject": "数学",
+        "bookName": "初中数学知识清单",
+        "chapterList": [
+          {
+            "bookId": "ByfSk4gBwlPdQ5zgyNYL",
+            "example": "知识1　代数式及其分类",
+            "score": 0
+          },
+          {
+            "bookId": "EifSk4gBwlPdQ5zgw9VT",
+            "example": "知识3　代数式的值",
+            "score": 0
+          },
+          {
+            "bookId": "4SfSk4gBwlPdQ5zgwtRd",
+            "example": "知识2　列代数式（重点）",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "html": null,
+        "htmlName": null,
+        "edition": "北师版",
+        "editionTime": "2020年3月第1版",
+        "isbn": "330898780960809595",
+        "picBasePath": "/data/textbook/曲一线初中知识清单——数学/OEBPS",
+        "subject": "数学",
+        "bookName": "曲一线初中知识清单——数学",
+        "chapterList": [
+          {
+            "bookId": "QCjYk4gBwlPdQ5zgcTH_",
+            "example": "第2章　代数式与整式",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "html": null,
+        "htmlName": null,
+        "edition": "冀教版",
+        "editionTime": "2012年7月第1版",
+        "isbn": "199743542969429695",
+        "picBasePath": "/data/textbook/1019",
+        "subject": "数学",
+        "bookName": "数学七年级上册（河北）",
+        "chapterList": [
+          {
+            "bookId": "VCjXk4gBwlPdQ5zgKh1B",
+            "example": "读一读　代数学",
+            "score": 0
+          },
+          {
+            "bookId": "cyjXk4gBwlPdQ5zgKh3k",
+            "example": "1.用字母表示数后，数或字母用运算符号连接组成了代数式.代数式是现实世界中数量及数量关系的数学表示，用代数式表示数量关系既简明又具有一般性，同一个代数式还可以表示不同实际问题中的数量关系.",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "html": null,
+        "htmlName": null,
+        "edition": "教科版",
+        "editionTime": "2013年4月第3版",
+        "isbn": "372870989380893804",
+        "picBasePath": "/data/textbook/123",
+        "subject": "数学",
+        "bookName": "初中数学知识清单",
+        "chapterList": [
+          {
+            "bookId": "wCjXk4gBwlPdQ5zgfyGk",
+            "example": "第2章　代数式与整式",
+            "score": 0
+          }
+        ]
+      }
+    ],
+    "pageNo": 1,
+    "pageSize": 10,
+    "totalCount": 6
+  },
+  "courseList": [],
+  "instanceInfo": {
+    "property": [
+      {
+        "object": "代数",
+        "predicate": "rdfs__label",
+        "predicateLabel": "名称",
+        "subject": "代数"
+      },
+      {
+        "object": "'''代数'''是一个较为基础的数学分支。它的研究对象有许多。诸如数 (数学)、数量、代数式、關係 (数学)、方程理论、代数结构等等都是代数学的研究对象。::;初等代数一般在中學時讲授，介紹代数的基本思想：研究当我们对数字作加法或乘法时会发生什么，以及了解變數的概念和如何建立多项式并找出它们的根 (數學)。::;代数的研究對象不僅是數字，还有各種抽象化的結構。例如整數集作為一個帶有加法、乘法和序關係的集合就是一個代數結構。在其中我們只關心各種關係及其性質，而對於「數本身是甚麼」這樣的問題並不關心。常見的代數結構類型有群、环、域、模、線性空間等。并且,代数是几何的总称，代数是还可以用任何字母代替的。",
+        "predicate": "rdfs__comment",
+        "predicateLabel": "描述",
+        "subject": "代数"
+      }
+    ],
+    "relation": [],
+    "uri": "http://edukg.org/knowledge/3.0/instance/math#xlore-E18903",
+    "abstractMsg": "",
+    "classList": [
+      {
+        "id": "Resource",
+        "label": ""
+      },
+      {
+        "id": "edukg_cls_math__main-C0",
+        "label": "数学实体"
+      },
+      {
+        "id": "edukg_cls_math__main-C2",
+        "label": "数学领域"
+      }
+    ],
+    "name": "代数"
+  }
+};
+        let currentTheme = 'None';
+        let isFullscreen = false;
+        
+        // 初始化图表
+        function initChart() {
+            const dom = document.getElementById('chart_d6a9d66c');
+            myChart = echarts.init(dom, currentTheme === 'default' ? null : currentTheme, {
+                renderer: 'canvas',
+                useDirtyRect: false
+            });
+            
+            // 设置配置
+            if (currentConfig && typeof currentConfig === 'object') {
+                myChart.setOption(currentConfig);
+            }
+            
+            // 响应式处理
+            if (none) {
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        }
+        
+        // 更改主题
+        function changeTheme() {
+            const themeSelector = document.getElementById('themeSelector');
+            const newTheme = themeSelector.value;
+            currentTheme = newTheme;
+            
+            // 销毁旧图表
+            if (myChart) {
+                myChart.dispose();
+            }
+            
+            // 重新初始化
+            const dom = document.getElementById('chart_d6a9d66c');
+            myChart = echarts.init(dom, newTheme === 'default' ? null : newTheme);
+            myChart.setOption(currentConfig);
+        }
+        
+        // 更改图表类型
+        function changeChartType() {
+            const typeSelector = document.getElementById('chartTypeSelector');
+            const newType = typeSelector.value;
+            
+            // 更新配置中的图表类型
+            if (currentConfig.series) {
+                if (Array.isArray(currentConfig.series)) {
+                    currentConfig.series.forEach(series => {
+                        series.type = newType;
+                    });
+                } else {
+                    currentConfig.series.type = newType;
+                }
+                
+                // 根据图表类型调整配置
+                adjustConfigForChartType(newType);
+                myChart.setOption(currentConfig, true);
+            }
+        }
+        
+        // 根据图表类型调整配置
+        function adjustConfigForChartType(type) {
+            switch(type) {
+                case 'pie':
+                    // 饼图不需要坐标轴
+                    delete currentConfig.xAxis;
+                    delete currentConfig.yAxis;
+                    break;
+                case 'radar':
+                    // 雷达图需要特殊配置
+                    if (!currentConfig.radar) {
+                        currentConfig.radar = {
+                            indicator: [
+                                { name: '指标1', max: 100 },
+                                { name: '指标2', max: 100 },
+                                { name: '指标3', max: 100 }
+                            ]
+                        };
+                    }
+                    break;
+                case 'bar':
+                case 'line':
+                    // 确保有坐标轴
+                    if (!currentConfig.xAxis) {
+                        currentConfig.xAxis = { type: 'category' };
+                    }
+                    if (!currentConfig.yAxis) {
+                        currentConfig.yAxis = { type: 'value' };
+                    }
+                    break;
+            }
+        }
+        
+        // 编辑标题
+        function editTitle() {
+            const titleElement = document.getElementById('chartTitle');
+            const currentTitle = titleElement.textContent;
+            const newTitle = prompt('请输入新的图表标题:', currentTitle);
+            
+            if (newTitle && newTitle.trim() !== '') {
+                titleElement.textContent = newTitle.trim();
+                
+                // 更新图表配置中的标题
+                if (!currentConfig.title) {
+                    currentConfig.title = {};
+                }
+                currentConfig.title.text = newTitle.trim();
+                myChart.setOption(currentConfig);
+                
+                // 更新页面标题
+                document.title = newTitle.trim();
+            }
+        }
+        
+        // 导出图片
+        function exportImage() {
+            const url = myChart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff'
+            });
+            
+            const link = document.createElement('a');
+            link.download = `chart_${new Date().getTime()}.png`;
+            link.href = url;
+            link.click();
+        }
+        
+        // 导出HTML
+        function exportHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = `chart_${new Date().getTime()}.html`;
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 全屏切换
+        function toggleFullscreen() {
+            const chartContainer = document.querySelector('.chart-container');
+            
+            if (!isFullscreen) {
+                chartContainer.classList.add('fullscreen');
+                isFullscreen = true;
+            } else {
+                chartContainer.classList.remove('fullscreen');
+                isFullscreen = false;
+            }
+            
+            // 延迟调整图表大小
+            setTimeout(() => {
+                myChart.resize();
+            }, 300);
+        }
+        
+        // 刷新图表
+        function refreshChart() {
+            myChart.clear();
+            myChart.setOption(currentConfig);
+        }
+        
+        // 显示设置面板
+        function showSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.add('open');
+        }
+        
+        // 关闭设置面板
+        function closeSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.remove('open');
+        }
+        
+        // 更改背景颜色
+        function changeBgColor() {
+            const colorPicker = document.getElementById('bgColorPicker');
+            const color = colorPicker.value;
+            document.body.style.background = color;
+        }
+        
+        // 切换动画
+        function toggleAnimation() {
+            const toggle = document.getElementById('animationToggle');
+            const enabled = toggle.checked;
+            
+            if (currentConfig.animation !== undefined) {
+                currentConfig.animation = enabled;
+                myChart.setOption(currentConfig);
+            }
+        }
+        
+        // 切换数据缩放
+        function toggleDataZoom() {
+            const toggle = document.getElementById('dataZoomToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                currentConfig.dataZoom = [
+                    {
+                        type: 'slider',
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        type: 'inside'
+                    }
+                ];
+            } else {
+                delete currentConfig.dataZoom;
+            }
+            
+            myChart.setOption(currentConfig, true);
+        }
+        
+        // 切换响应式
+        function toggleResponsive() {
+            const toggle = document.getElementById('responsiveToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            } else {
+                window.removeEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        exportHTML();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        exportImage();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        toggleFullscreen();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshChart();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
+            }
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+        });
+        
+        // 点击空白处关闭设置面板
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('settingsPanel');
+            const settingsBtn = e.target.closest('button[onclick="showSettings()"]');
+            
+            if (!panel.contains(e.target) && !settingsBtn && panel.classList.contains('open')) {
+                closeSettings();
+            }
+        });
+        
+    </script>
+</body>
+</html>
+        
