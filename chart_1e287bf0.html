@@ -1,0 +1,568 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据可视化图表</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .chart-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .edit-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .edit-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        select:hover, button:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .chart-container {
+            height: calc(100vh - 80px);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-main {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-panel.open {
+            right: 0;
+        }
+        
+        .settings-content {
+            padding: 30px;
+        }
+        
+        .settings-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+        
+        .setting-group {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .setting-group label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+        }
+        
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .toolbar-left, .toolbar-right {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .chart-title {
+                font-size: 18px;
+            }
+            
+            .settings-panel {
+                width: 100vw;
+                right: -100vw;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <h1 class="chart-title" id="chartTitle">数据可视化图表</h1>
+            <button class="edit-btn" onclick="editTitle()">✏️ 编辑标题</button>
+        </div>
+        <div class="toolbar-right">
+            <select id="themeSelector" onchange="changeTheme()">
+                <option value="default" selected>默认主题</option>
+<option value="dark" >暗黑主题</option>
+<option value="vintage" >复古主题</option>
+<option value="westeros" >权力的游戏主题</option>
+<option value="essos" >厄索斯主题</option>
+<option value="wonderland" >仙境主题</option>
+<option value="walden" >瓦尔登湖主题</option>
+<option value="chalk" >粉笔主题</option>
+<option value="infographic" >信息图主题</option>
+<option value="macarons" >马卡龙主题</option>
+<option value="roma" >罗马主题</option>
+<option value="shine" >闪亮主题</option>
+<option value="purple-passion" >紫色激情主题</option>
+            </select>
+            <select id="chartTypeSelector" onchange="changeChartType()">
+                <option value="bar" >柱状图</option>
+<option value="line" >折线图</option>
+<option value="pie" >饼图</option>
+<option value="scatter" >散点图</option>
+<option value="radar" >雷达图</option>
+<option value="funnel" >漏斗图</option>
+<option value="gauge" >仪表盘</option>
+<option value="heatmap" >热力图</option>
+<option value="treemap" >矩形树图</option>
+<option value="sunburst" >旭日图</option>
+<option value="graph" >关系图</option>
+<option value="sankey" >桑基图</option>
+<option value="parallel" >平行坐标</option>
+<option value="candlestick" >K线图</option>
+<option value="boxplot" >箱线图</option>
+            </select>
+            <button onclick="exportImage()">📷 导出图片</button>
+            <button onclick="exportHTML()">💾 导出HTML</button>
+            <button onclick="toggleFullscreen()">🔍 全屏</button>
+            <button onclick="refreshChart()">🔄 刷新</button>
+            <button onclick="showSettings()">⚙️ 设置</button>
+        </div>
+    </div>
+    
+    <!-- 图表容器 -->
+    <div class="chart-container">
+        <div id="chart_93cc9b5c" class="chart-main"></div>
+    </div>
+    
+    <!-- 设置面板 -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-content">
+            <h3>图表设置</h3>
+            <div class="setting-group">
+                <label>背景颜色:</label>
+                <input type="color" id="bgColorPicker" onchange="changeBgColor()" value="#ffffff">
+            </div>
+            <div class="setting-group">
+                <label>动画效果:</label>
+                <input type="checkbox" id="animationToggle" onchange="toggleAnimation()" checked>
+            </div>
+            <div class="setting-group">
+                <label>数据缩放:</label>
+                <input type="checkbox" id="dataZoomToggle" onchange="toggleDataZoom()" >
+            </div>
+            <div class="setting-group">
+                <label>响应式:</label>
+                <input type="checkbox" id="responsiveToggle" onchange="toggleResponsive()" checked>
+            </div>
+            <button onclick="closeSettings()">关闭</button>
+        </div>
+    </div>
+    
+    <!-- 加载ECharts -->
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    
+    <!-- 主题文件 -->
+    
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/dark.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/vintage.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/westeros.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/essos.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/wonderland.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/walden.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/chalk.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/infographic.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/macarons.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/roma.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/shine.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/echarts@5/theme/purple-passion.js"></script>
+        
+    
+    <script>
+        
+        // 全局变量
+        let myChart;
+        let currentConfig = {};
+        let currentTheme = 'default';
+        let isFullscreen = false;
+        
+        // 初始化图表
+        function initChart() {
+            const dom = document.getElementById('chart_93cc9b5c');
+            myChart = echarts.init(dom, currentTheme === 'default' ? null : currentTheme, {
+                renderer: 'canvas',
+                useDirtyRect: false
+            });
+            
+            // 设置配置
+            if (currentConfig && typeof currentConfig === 'object') {
+                myChart.setOption(currentConfig);
+            }
+            
+            // 响应式处理
+            if (true) {
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        }
+        
+        // 更改主题
+        function changeTheme() {
+            const themeSelector = document.getElementById('themeSelector');
+            const newTheme = themeSelector.value;
+            currentTheme = newTheme;
+            
+            // 销毁旧图表
+            if (myChart) {
+                myChart.dispose();
+            }
+            
+            // 重新初始化
+            const dom = document.getElementById('chart_93cc9b5c');
+            myChart = echarts.init(dom, newTheme === 'default' ? null : newTheme);
+            myChart.setOption(currentConfig);
+        }
+        
+        // 更改图表类型
+        function changeChartType() {
+            const typeSelector = document.getElementById('chartTypeSelector');
+            const newType = typeSelector.value;
+            
+            // 更新配置中的图表类型
+            if (currentConfig.series) {
+                if (Array.isArray(currentConfig.series)) {
+                    currentConfig.series.forEach(series => {
+                        series.type = newType;
+                    });
+                } else {
+                    currentConfig.series.type = newType;
+                }
+                
+                // 根据图表类型调整配置
+                adjustConfigForChartType(newType);
+                myChart.setOption(currentConfig, true);
+            }
+        }
+        
+        // 根据图表类型调整配置
+        function adjustConfigForChartType(type) {
+            switch(type) {
+                case 'pie':
+                    // 饼图不需要坐标轴
+                    delete currentConfig.xAxis;
+                    delete currentConfig.yAxis;
+                    break;
+                case 'radar':
+                    // 雷达图需要特殊配置
+                    if (!currentConfig.radar) {
+                        currentConfig.radar = {
+                            indicator: [
+                                { name: '指标1', max: 100 },
+                                { name: '指标2', max: 100 },
+                                { name: '指标3', max: 100 }
+                            ]
+                        };
+                    }
+                    break;
+                case 'bar':
+                case 'line':
+                    // 确保有坐标轴
+                    if (!currentConfig.xAxis) {
+                        currentConfig.xAxis = { type: 'category' };
+                    }
+                    if (!currentConfig.yAxis) {
+                        currentConfig.yAxis = { type: 'value' };
+                    }
+                    break;
+            }
+        }
+        
+        // 编辑标题
+        function editTitle() {
+            const titleElement = document.getElementById('chartTitle');
+            const currentTitle = titleElement.textContent;
+            const newTitle = prompt('请输入新的图表标题:', currentTitle);
+            
+            if (newTitle && newTitle.trim() !== '') {
+                titleElement.textContent = newTitle.trim();
+                
+                // 更新图表配置中的标题
+                if (!currentConfig.title) {
+                    currentConfig.title = {};
+                }
+                currentConfig.title.text = newTitle.trim();
+                myChart.setOption(currentConfig);
+                
+                // 更新页面标题
+                document.title = newTitle.trim();
+            }
+        }
+        
+        // 导出图片
+        function exportImage() {
+            const url = myChart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff'
+            });
+            
+            const link = document.createElement('a');
+            link.download = `chart_${new Date().getTime()}.png`;
+            link.href = url;
+            link.click();
+        }
+        
+        // 导出HTML
+        function exportHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = `chart_${new Date().getTime()}.html`;
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 全屏切换
+        function toggleFullscreen() {
+            const chartContainer = document.querySelector('.chart-container');
+            
+            if (!isFullscreen) {
+                chartContainer.classList.add('fullscreen');
+                isFullscreen = true;
+            } else {
+                chartContainer.classList.remove('fullscreen');
+                isFullscreen = false;
+            }
+            
+            // 延迟调整图表大小
+            setTimeout(() => {
+                myChart.resize();
+            }, 300);
+        }
+        
+        // 刷新图表
+        function refreshChart() {
+            myChart.clear();
+            myChart.setOption(currentConfig);
+        }
+        
+        // 显示设置面板
+        function showSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.add('open');
+        }
+        
+        // 关闭设置面板
+        function closeSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.remove('open');
+        }
+        
+        // 更改背景颜色
+        function changeBgColor() {
+            const colorPicker = document.getElementById('bgColorPicker');
+            const color = colorPicker.value;
+            document.body.style.background = color;
+        }
+        
+        // 切换动画
+        function toggleAnimation() {
+            const toggle = document.getElementById('animationToggle');
+            const enabled = toggle.checked;
+            
+            if (currentConfig.animation !== undefined) {
+                currentConfig.animation = enabled;
+                myChart.setOption(currentConfig);
+            }
+        }
+        
+        // 切换数据缩放
+        function toggleDataZoom() {
+            const toggle = document.getElementById('dataZoomToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                currentConfig.dataZoom = [
+                    {
+                        type: 'slider',
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        type: 'inside'
+                    }
+                ];
+            } else {
+                delete currentConfig.dataZoom;
+            }
+            
+            myChart.setOption(currentConfig, true);
+        }
+        
+        // 切换响应式
+        function toggleResponsive() {
+            const toggle = document.getElementById('responsiveToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+            } else {
+                window.removeEventListener('resize', function() {
+                    myChart.resize();
+                });
+            }
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        exportHTML();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        exportImage();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        toggleFullscreen();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshChart();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
+            }
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+        });
+        
+        // 点击空白处关闭设置面板
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('settingsPanel');
+            const settingsBtn = e.target.closest('button[onclick="showSettings()"]');
+            
+            if (!panel.contains(e.target) && !settingsBtn && panel.classList.contains('open')) {
+                closeSettings();
+            }
+        });
+        
+    </script>
+</body>
+</html>
